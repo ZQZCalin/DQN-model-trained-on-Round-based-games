@@ -4,6 +4,8 @@ from numpy.random import randint
 from math import ceil, floor
 import numpy as np
 import yaml
+import time
+from scipy.spatial.distance import euclidean
 
 
 file = open('config.yml', 'r')
@@ -57,12 +59,19 @@ class snakeEnv():
         self.snake = None
         self.apple = None
         self.done = 0
+        self.score = 0
+
+        self.state_size = STATE_SIZE
+        self.action_size = ACTION_SIZE
 
     def reset(self):
 
+        self.done = 0
+        self.score = 0
+
         self.snake = Snake(
-                pos_to_pixel(randint(GRIDSIZE, WIDTH-GRIDSIZE)), 
-                pos_to_pixel(randint(GRIDSIZE, HEIGHT-GRIDSIZE)), 
+                pos_to_pixel(randint(5*GRIDSIZE, WIDTH-5*GRIDSIZE)), 
+                pos_to_pixel(randint(5*GRIDSIZE, HEIGHT-5*GRIDSIZE)), 
                 SNAKELENGTH, 
                 DIRECTION[randint(0, ACTION_SIZE)], 
                 SNAKECOLOR, GRIDSIZE)
@@ -73,9 +82,7 @@ class snakeEnv():
                 pos_to_pixel(randint(0, HEIGHT)),
                 RED, WIDTH, HEIGHT)
 
-        self.update_state()
-
-        return self.state 
+        return self.update_state()
 
     def update_state(self):
         # update state from self.snake and self.apple
@@ -128,16 +135,101 @@ class snakeEnv():
             new_state[11] = 1
 
         self.state = new_state
+        return self.state
+
+    def update_score(self):
+        self.score = self.snake.body.__len__() - SNAKELENGTH
+        return self.score
+
+    def reward(self, state, next_state):
+        # test reward function 1:
+        # score of apple v.s. snake, lower score means closer
+        s1 = np.sum(state[4:8])
+        s2 = np.sum(next_state[4:8])
+
+        if s1 < s2:
+            # far away from apple
+            return -1
+        if s1 > s2:
+            # closer to apple
+            return 1
+
+        # other cases
+        return 0
 
     def step(self, action):
+        # BE VERY CAREFUL ABOUT THE POSITION & POINTER ISSUES !!!!!
+
+        if self.done:
+            return
 
         current_state = self.state
-        ...
-        next_state = self.state
-        reward_ = reward(current_state, next_state)
-        return current_state, reward_, next_state
+        current_snake = self.snake
+        pos_current = [current_snake.x, current_snake.y]
+
+        reward_ = 0
+
+        # update direction
+        # opposite_direction = (DIRECTION_INVERSE[self.snake.direction] + 2) % 4
+        if action != (DIRECTION_INVERSE[self.snake.direction] + 2) % 4:
+            self.snake.direction = DIRECTION[action]
+        
+        # update game/motion, done, and reward_
+        self.snake.addHead()
+        if self.snake.isDead() or self.snake.isOutOfBounds(WIDTH, HEIGHT):
+            # game-over
+            self.done = 1
+            reward_ = -100
+        if not(self.snake.head.colliderect(self.apple.rect)):
+            # not eat apple
+            self.snake.deleteTail()
+        else:
+            # eat apple
+            self.apple.move()
+            reward_ = 10
+
+        next_state = self.update_state()
+
+        # if reward_ == 0:
+        #     reward_ = self.reward(current_state, next_state)
+        
+        pos_next = [self.snake.x, self.snake.y]
+        pos_apple = [self.apple.x, self.apple.y]
+        d1 = euclidean(pos_apple, pos_current)
+        d2 = euclidean(pos_apple, pos_next)
+
+        if d1 > d2:
+            reward_ = 1
+        else:
+            reward_ = -1
+
+        return next_state, reward_, self.done, self.update_score()
+
+    def render(self):
+        # this line prevents pygame from being recognized as "crashed" by OS
+        pygame.event.pump()
+
+        WINDOW.fill(BLACK)
+        #  draw the grid
+        for x in range(0, WIDTH, GRIDSIZE):
+            pygame.draw.line(WINDOW, GRAY, (x, 0), (x, HEIGHT))
+        for y in range(0, HEIGHT, GRIDSIZE):
+            pygame.draw.line(WINDOW, GRAY, (0, y), (WIDTH, y))
+        #  draw the apple
+        pygame.draw.rect(WINDOW, self.apple.color, self.apple.rect)
+        #  draw the snake
+        for part in self.snake.body:
+            pygame.draw.rect(WINDOW, self.snake.color, part)
+            part_small = part.inflate(-3, -3)
+            pygame.draw.rect(WINDOW, WHITE, part_small, 3)
+        #  draw the score
+        # SCORE = drawScore(rect=self.snake)
+        pygame.display.update()
+        fpsClock.tick(FPS)
+        time.sleep(0.5)
+
 
 # Main
 
 env = snakeEnv()
-print("hello")
+# print("hello")

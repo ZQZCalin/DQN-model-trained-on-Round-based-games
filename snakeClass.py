@@ -21,9 +21,22 @@ class Snake:
         self.color = color
         self.boxSize = boxSize
         self.body = []
+
+        k1 = 0
+        k2 = 0
+        if self.direction == "R":
+            k1 = -1
+        if self.direction == "L":
+            k1 = 1
+        if self.direction == "U":
+            k2 = 1
+        if self.direction == "D":
+            k2 = -1
+
         for i in range(self.length):
-            tempRect = Rect(self.x - i * self.boxSize,
-                            self.y, self.boxSize, self.boxSize)
+            tempRect = Rect(self.x + k1*i * self.boxSize,
+                            self.y + k2*i * self.boxSize, 
+                            self.boxSize, self.boxSize)
             self.body.append(tempRect)
         self.head = self.body[0]
 

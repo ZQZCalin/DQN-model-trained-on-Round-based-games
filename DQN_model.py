@@ -8,6 +8,7 @@ from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
+from snakeEnv import *
 
 ### DQN Agent
 
@@ -40,7 +41,7 @@ class Agent():
         self.epsilon_decay = 0.995
         self.epsilon_min = 0.01
 
-        self.learning_rate = 0.001
+        self.learning_rate = 0.00025
 
         self.model = self._build_model()
 
@@ -57,8 +58,10 @@ class Agent():
 
         model.add(Dense(128, input_dim=self.state_size, activation="relu"))
         model.add(Dense(128, activation="relu"))
-        model.add(Dense(self.action_size, activation="linear"))
+        model.add(Dense(128, activation="relu"))
+        model.add(Dense(self.action_size, activation="softmax"))
 
+        # model.compile(loss="categorical_crossentropy", optimizer=Adam(lr=self.learning_rate))
         model.compile(loss="mse", optimizer=Adam(lr=self.learning_rate))
 
         return model
@@ -145,7 +148,7 @@ def train_DQN(env, agent, params):
     action_size = params["action_size"]
     batch_size = params["batch_size"]
     n_episodes = params["n_episodes"]
-    max_games = params["max_games"]
+    max_moves = params["max_moves"]
     output_dir = params["output_dir"]
 
     # create output directory if not exists
@@ -161,15 +164,18 @@ def train_DQN(env, agent, params):
         state = np.reshape(state, [1,state_size])
 
         # Step 2: Simulate one trial of the game
-        for score in range(max_games):
+        steps = []
+        for _ in range(max_moves):
             # visualize the game
-            env.render()
+            # env.render()
+
             # simulate action and outcomes
             action = agent.act(state)
+            steps.append(DIRECTION[action])
 
-            next_state, reward, done, _ = env.step(action)
+            next_state, reward, done, score = env.step(action)
 
-            reward = reward if not done else -10    # penalize game over action
+            # reward = reward if not done else -10    # penalize game over action
 
             next_state = np.reshape(next_state, [1,state_size])
 
@@ -182,6 +188,9 @@ def train_DQN(env, agent, params):
 
         # print the training result
         print("progress: {}/{}, score: {}, e: {:.2}".format(e,n_episodes,score,agent.epsilon))
+
+        # print steps and positions:
+        # print(steps)
 
         # Step 3: Train DQN based on the agent's memory
         """
@@ -223,14 +232,14 @@ def test_DQN(env, agent, params):
         state = np.reshape(state, [1,state_size])
 
         # Step 2: Simulate one trial of the game
-        for score in range(max_games):
+        for _ in range(max_games):
 
             env.render()
 
             # use exploit() instead of act()
             action = agent.exploit(state)
 
-            next_state, reward, done, _ = env.step(action)
+            next_state, reward, done, score = env.step(action)
 
             state = np.reshape(next_state, [1,state_size])
 
@@ -281,40 +290,56 @@ def random_player(env, agent, params, verbose=0):
 
 if __name__ == "__main__":
 
-    # create environment
-    env = gym.make("CartPole-v0")
-    state_size = env.observation_space.shape[0]
-    action_size = env.action_space.n
+    # GAME = "CartPole-v0"
+    GAME = "SNAKE"
+    # mode = "TRAIN"
+    mode = "TEST"
 
-    # set parameters
-    params = {
-        # size of state space
-        "state_size" : state_size,
-        # size of action space
-        "action_size" : action_size,
-        # batch size
-        "batch_size" : 64,
-        # number of games to train
-        "n_episodes" : 1000,
-        # maximum number of games in each epoch
-        "max_games" : 5000,
-        # output directory
-        "output_dir" : "model_output_test_4",
-    }
+    if GAME == "CartPole-v0":
+        # create environment
+        env = gym.make("CartPole-v0")
+        state_size = env.observation_space.shape[0]
+        action_size = env.action_space.n
+    
+    if GAME == "SNAKE":
+        env = snakeEnv()
+        state_size = env.state_size
+        action_size = env.action_size
 
-    # create agent
-    agent = Agent(params["state_size"], params["action_size"])
+    if mode == "TRAIN":
+        # set parameters
+        params = {
+            # size of state space
+            "state_size" : state_size,
+            # size of action space
+            "action_size" : action_size,
+            # batch size
+            "batch_size" : 512,
+            # number of games to train
+            "n_episodes" : 1000,
+            # maximum number of games in each epoch
+            "max_moves" : 500,
+            # output directory
+            "output_dir" : "model_output_test_2",
+        }
 
-    # Train DQN Network
-    # train_DQN(env, agent, params)
+        # create agent
+        agent = Agent(params["state_size"], params["action_size"])
 
-    # Play Game
-    test_params = {
-        "state_size" : state_size,
-        "action_size" : action_size,
-        "max_games" : 5000,
-        "n_tests" : 100,
-        "model_name" : "weights_v4.hdf5",
-    }
-    # test_DQN(env, agent, test_params)
-    # random_player(env, agent, test_params, verbose=0)
+        # Train DQN Network
+        train_DQN(env, agent, params)
+
+    if mode == "TEST":
+        # Play Game
+        test_params = {
+            "state_size" : state_size,
+            "action_size" : action_size,
+            "max_games" : 500,
+            "n_tests" : 10,
+            "model_name" : "test_weight.hdf5",
+        }
+
+        agent = Agent(test_params["state_size"], test_params["action_size"])
+
+        test_DQN(env, agent, test_params)
+        # random_player(env, agent, test_params, verbose=0)

@@ -5,7 +5,7 @@ import random
 import os
 from snakeClass import Apple, Snake
 
-# pygame.init()
+pygame.init()
 
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
@@ -26,13 +26,15 @@ WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Snake")
 
 SNAKECOLOR = GREEN
-GRIDSIZE = 10
+# GRIDSIZE = 10
+GRIDSIZE = 25
 SNAKELENGTH = 3
 
 DIRECTION = ["U", "R", "D", "L"]
+DIRECTION_INVERSE = {"U":0, "R":1, "D":2, "L":3}
 
-# SNAKE = Snake(200, 200, 3, "R", SNAKECOLOR, GRIDSIZE)
-# APPLE = Apple(GRIDSIZE, 100, 100, RED, WIDTH, HEIGHT)
+SNAKE = Snake(200, 200, 3, "R", SNAKECOLOR, GRIDSIZE)
+APPLE = Apple(GRIDSIZE, 100, 100, RED, WIDTH, HEIGHT)
 
 
 def gameButtons():
@@ -254,9 +256,9 @@ def showGameOver():
         fpsClock.tick(FPS)
 
 
-def drawScore():
+def drawScore(rect=SNAKE):
     scoreFont = pygame.font.Font('freesansbold.ttf', 18)
-    score = len(SNAKE.body) - SNAKE.length
+    score = len(rect.body) - rect.length
     fontSurface = scoreFont.render("Score: %d" % score, True, WHITE)
     WINDOW.blit(fontSurface, (WIDTH - 100, 10))
     return score
@@ -375,21 +377,23 @@ def mainGame_snakeTwo():
 
 
 # ----------------------------------------------------------------------------
-# showStartScreen()
-# while True:
-#     scoreFilePath = os.path.join(".", "HighScore.txt")
-#     if not (os.path.exists(scoreFilePath)):
-#         HIGHSCORE = 0
-#     else:
-#         with(open(scoreFilePath)) as sFile:
-#             HIGHSCORE = sFile.readline()
-#     if HIGHSCORE == '':
-#         HIGHSCORE = 0
-#     SNAKE = Snake(200, 200, 3, "R", SNAKECOLOR, GRIDSIZE)
-#     APPLE = Apple(GRIDSIZE, 100, 100, RED, WIDTH, HEIGHT)
-#     if GAMECHOICE == 1:
-#         mainGame()
-#     else:
-#         mainGame_snakeTwo()
-#     saveScore()
-#     showGameOver()
+manual_play = 0
+if manual_play:
+    showStartScreen()
+    while True:
+        scoreFilePath = os.path.join(".", "HighScore.txt")
+        if not (os.path.exists(scoreFilePath)):
+            HIGHSCORE = 0
+        else:
+            with(open(scoreFilePath)) as sFile:
+                HIGHSCORE = sFile.readline()
+        if HIGHSCORE == '':
+            HIGHSCORE = 0
+        SNAKE = Snake(200, 200, 3, "R", SNAKECOLOR, GRIDSIZE)
+        APPLE = Apple(GRIDSIZE, 100, 100, RED, WIDTH, HEIGHT)
+        if GAMECHOICE == 1:
+            mainGame()
+        else:
+            mainGame_snakeTwo()
+        saveScore()
+        showGameOver()
