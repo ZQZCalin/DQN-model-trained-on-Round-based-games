@@ -3,20 +3,20 @@ from snakeGame import *
 from numpy.random import randint
 from math import ceil, floor
 import numpy as np
-import yaml
+# import yaml
 import time
 from scipy.spatial.distance import euclidean
 
 
-file = open('config.yml', 'r')
-cfg = yaml.load(file, Loader=yaml.FullLoader)
+# file = open('config.yml', 'r')
+# cfg = yaml.load(file, Loader=yaml.FullLoader)
 
 def pos_to_pixel(pos):
     # convert position to pixel position
     return floor(pos/GRIDSIZE)*GRIDSIZE
 
-STATE_SIZE = 12
-ACTION_SIZE = 4
+# STATE_SIZE = 12
+# ACTION_SIZE = 4
 
 class snakeEnv():
     """
@@ -55,14 +55,17 @@ class snakeEnv():
     """
 
     def __init__(self):
-        self.state = np.zeros((STATE_SIZE, ))
+        # self.state = np.zeros((STATE_SIZE, ))
+        self.state = np.zeros((12,))
         self.snake = None
         self.apple = None
         self.done = 0
         self.score = 0
 
-        self.state_size = STATE_SIZE
-        self.action_size = ACTION_SIZE
+        # self.state_size = STATE_SIZE
+        # self.action_size = ACTION_SIZE
+        self.state_size = 12
+        self.action_size = 4
 
     def reset(self):
 
@@ -73,7 +76,7 @@ class snakeEnv():
                 pos_to_pixel(randint(5*GRIDSIZE, WIDTH-5*GRIDSIZE)), 
                 pos_to_pixel(randint(5*GRIDSIZE, HEIGHT-5*GRIDSIZE)), 
                 SNAKELENGTH, 
-                DIRECTION[randint(0, ACTION_SIZE)], 
+                DIRECTION[randint(0, self.action_size)], 
                 SNAKECOLOR, GRIDSIZE)
 
         self.apple = Apple(
@@ -87,7 +90,7 @@ class snakeEnv():
     def update_state(self):
         # update state from self.snake and self.apple
         # called after self.snake and self.apple are updated
-        new_state = np.zeros((STATE_SIZE, ))
+        new_state = np.zeros((self.state_size, ))
 
         # Direction of Snake
         if self.snake.direction == "U":
@@ -158,6 +161,19 @@ class snakeEnv():
         return 0
 
     def step(self, action):
+        """ 
+        about reward:
+        Two base rewards:
+        - die: -100
+        - get apple: 10
+        Additional rewards:
+        - NAIVE:
+            - closer to apple: 1
+            - away from apple: -1
+        - DETECT_ENCLOSE:
+            - 
+        """
+
         # BE VERY CAREFUL ABOUT THE POSITION & POINTER ISSUES !!!!!
 
         if self.done:
@@ -190,8 +206,6 @@ class snakeEnv():
 
         next_state = self.update_state()
 
-        # if reward_ == 0:
-        #     reward_ = self.reward(current_state, next_state)
         
         pos_next = [self.snake.x, self.snake.y]
         pos_apple = [self.apple.x, self.apple.y]
@@ -205,28 +219,36 @@ class snakeEnv():
 
         return next_state, reward_, self.done, self.update_score()
 
-    def render(self):
+    def render(self, FPS=15):
         # this line prevents pygame from being recognized as "crashed" by OS
         pygame.event.pump()
 
         WINDOW.fill(BLACK)
+
         #  draw the grid
         for x in range(0, WIDTH, GRIDSIZE):
             pygame.draw.line(WINDOW, GRAY, (x, 0), (x, HEIGHT))
         for y in range(0, HEIGHT, GRIDSIZE):
             pygame.draw.line(WINDOW, GRAY, (0, y), (WIDTH, y))
+
         #  draw the apple
         pygame.draw.rect(WINDOW, self.apple.color, self.apple.rect)
+
         #  draw the snake
         for part in self.snake.body:
             pygame.draw.rect(WINDOW, self.snake.color, part)
             part_small = part.inflate(-3, -3)
             pygame.draw.rect(WINDOW, WHITE, part_small, 3)
+            
         #  draw the score
-        # SCORE = drawScore(rect=self.snake)
+        scoreFont = pygame.font.Font('freesansbold.ttf', 18)
+        fontSurface = scoreFont.render("Score: %d" % self.score, True, WHITE)
+        WINDOW.blit(fontSurface, (WIDTH - 100, 10))
+
         pygame.display.update()
+
+        # adjust speed to FPS
         fpsClock.tick(FPS)
-        time.sleep(0.5)
 
 
 # Main

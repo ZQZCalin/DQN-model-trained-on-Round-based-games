@@ -1,14 +1,14 @@
 ### Import Packages
 
-import os
+import sys, os, time 
+import importlib
 import random
-import gym
+# import gym
 import numpy as np
 from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
-from snakeEnv import *
 
 ### DQN Agent
 
@@ -29,21 +29,31 @@ class Agent():
         - epsilon_min: minimum threshold of epsilon
         - learning_rate: learning rate / step size
     """
-    def __init__(self, state_size, action_size):
+    def __init__(self, state_size, action_size, model=None):
         self.state_size = state_size
         self.action_size = action_size
 
+        # Define Hyper-parameters in config.py
+        self.gamma = GAMMA
+
+        self.epsilon = EPSILON
+        self.epsilon_decay = EPSILON_DECAY 
+        self.epsilon_min = EPSILON_MIN
+
+        self.learning_rate = LEARNING_RATE
+
+        # self.gamma = 0.95
+        # self.epsilon = 1.0
+        # self.epsilon_decay = 0.995
+        # self.epsilon_min = 0.01
+        # self.learning_rate = 0.00025
+
+        if model == None:
+            self.model = self._build_model()
+        else:
+            self.model = model
+        
         self.memory = deque(maxlen=2000)
-
-        self.gamma = 0.95
-
-        self.epsilon = 1.0
-        self.epsilon_decay = 0.995
-        self.epsilon_min = 0.01
-
-        self.learning_rate = 0.00025
-
-        self.model = self._build_model()
 
     def _build_model(self):
         """
@@ -141,21 +151,33 @@ class Agent():
 
 ### Train DQN
 
-def train_DQN(env, agent, params):
+def train_DQN(env, agent, params=None):
 
     # fetch parameters
-    state_size = params["state_size"]
-    action_size = params["action_size"]
-    batch_size = params["batch_size"]
-    n_episodes = params["n_episodes"]
-    max_moves = params["max_moves"]
-    output_dir = params["output_dir"]
+    state_size = STATE_SIZE 
+    action_size = ACTION_SIZE
+    batch_size = BATCH_SIZE
+    n_episodes = N_TRAINS
+    max_moves = MAX_MOVES_TRAIN
+    model_dir = MODEL_DIR
+    output_dir = TRAIN_WEIGHT
+    fps = FPS_TRAIN
+    # state_size = params["state_size"]
+    # action_size = params["action_size"]
+    # batch_size = params["batch_size"]
+    # n_episodes = params["n_episodes"]
+    # max_moves = params["max_moves"]
+    # output_dir = params["output_dir"]
 
     # create output directory if not exists
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    else:
+        overwrite = input("Are you sure to overwrite the existing weights? y or n")
+        if overwrite == "n":
+            return
 
-    done = False
+    done = 0
 
     for e in range(n_episodes):
 
@@ -167,11 +189,11 @@ def train_DQN(env, agent, params):
         steps = []
         for _ in range(max_moves):
             # visualize the game
-            # env.render()
+            if fps != 0:
+                env.render(FPS=fps)
 
             # simulate action and outcomes
             action = agent.act(state)
-            steps.append(DIRECTION[action])
 
             next_state, reward, done, score = env.step(action)
 
@@ -189,19 +211,7 @@ def train_DQN(env, agent, params):
         # print the training result
         print("progress: {}/{}, score: {}, e: {:.2}".format(e,n_episodes,score,agent.epsilon))
 
-        # print steps and positions:
-        # print(steps)
-
         # Step 3: Train DQN based on the agent's memory
-        """
-        Discussion on Batch size:
-        If the algorithm does no converge nicely, changing batch size into a
-        non-static value (e.g., increasing with e) might help convergence.
-
-        Since DQN is trained only when score > batch_size, the algorith might
-        not learn at the very beginning. Therefore, we need to make it easier
-        to learn.
-        """
         if len(agent.memory) > batch_size:
             agent.replay(batch_size)
         # agent.replay(min(len(agent.memory), batch_size))
@@ -210,20 +220,26 @@ def train_DQN(env, agent, params):
         if e % 50 == 0:
             agent.save(output_dir + "/weights_" + "{:.0f}".format(e) + ".hdf5")
 
-def test_DQN(env, agent, params):
+def test_DQN(env, agent, params=None):
 
     # fetch parameters
-    state_size = params["state_size"]
-    action_size = params["action_size"]
-    n_tests = params["n_tests"]
-    max_games = params["max_games"]
-    model_name = params["model_name"]
+    state_size = STATE_SIZE
+    action_size = ACTION_SIZE
+    n_tests = N_TESTS
+    max_moves = MAX_MOVES_TEST
+    model_name = TEST_WEIGHT
+    fps = FPS_TEST
+    # state_size = params["state_size"]
+    # action_size = params["action_size"]
+    # n_tests = params["n_tests"]
+    # max_games = params["max_games"]
+    # model_name = params["model_name"]
 
     # load weights
     agent.load(model_name)
 
     # start testing
-    done = False
+    done = 0
 
     for e in range(n_tests):
 
@@ -232,9 +248,10 @@ def test_DQN(env, agent, params):
         state = np.reshape(state, [1,state_size])
 
         # Step 2: Simulate one trial of the game
-        for _ in range(max_games):
+        for _ in range(max_moves):
 
-            env.render()
+            if fps != 0:
+                env.render(FPS=fps)
 
             # use exploit() instead of act()
             action = agent.exploit(state)
@@ -247,7 +264,7 @@ def test_DQN(env, agent, params):
                 break
 
         # print the training result
-        print("progress: {}/{}, score: {}".format(e,n_tests,score))
+        print("progress: {}/{}, score: {}".format(e, n_tests, score))
 
 def random_player(env, agent, params, verbose=0):
     # fetch parameters
@@ -287,8 +304,42 @@ def random_player(env, agent, params, verbose=0):
 
     print("score:{}".format(score))
 
-
 if __name__ == "__main__":
+
+    # load configuration
+    model_dir = input("Please enter your model directory:\nmodel/")
+
+    print("===== loading configuration =====")
+    time.sleep(0.5)
+
+    # get a handle on the module
+    mdl = importlib.import_module("models.%s.config" % model_dir)
+    # is there an __all__?  if so respect it
+    if "__all__" in mdl.__dict__:
+        names = mdl.__dict__["__all__"]
+    else:
+        # otherwise we import all names that don't begin with _
+        names = [x for x in mdl.__dict__ if not x.startswith("_")]
+    # now drag them in
+    globals().update({k: getattr(mdl, k) for k in names})
+
+    print("===== configuration loaded =====")
+
+    # create agent
+    AGENT = Agent(STATE_SIZE, ACTION_SIZE, model=SEQUENTIAL)
+
+    MODEL_DIR = "models/" + model_dir
+    TRAIN_WEIGHT = MODEL_DIR + "/model_weight"
+    TEST_WEIGHT = MODEL_DIR + "/" + TEST_WEIGHT
+
+    # train and test
+    if MODE == "TRAIN":
+        train_DQN(ENV, AGENT)
+    if MODE == "TEST":
+        test_DQN(ENV, AGENT)
+
+# ARCHIVED
+if __name__ == "__main__" and False:
 
     # GAME = "CartPole-v0"
     GAME = "SNAKE"

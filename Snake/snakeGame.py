@@ -26,8 +26,8 @@ WINDOW = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Snake")
 
 SNAKECOLOR = GREEN
-# GRIDSIZE = 10
-GRIDSIZE = 25
+GRIDSIZE = 10
+# GRIDSIZE = 25
 SNAKELENGTH = 3
 
 DIRECTION = ["U", "R", "D", "L"]
