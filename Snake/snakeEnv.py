@@ -120,20 +120,21 @@ class snakeEnv():
         # Obstacle (Walls, body) position (wrt snake head)
         body_x = [rect.x for rect in self.snake.body]
         body_y = [rect.y for rect in self.snake.body]
+        body_pos = [(rect.x, rect.y) for rect in self.snake.body]
         if self.snake.direction != "D" and \
-        (self.snake.y == 0 or pos_to_pixel(self.snake.y-1) in body_y):
+        (self.snake.y <= 0 or (self.snake.x, self.snake.y-GRIDSIZE) in body_pos):
             # obstacle at north
             new_state[8] = 1
         if self.snake.direction != "L" and \
-        (self.snake.x == pos_to_pixel(WIDTH-1) or pos_to_pixel(self.snake.x+1) in body_x):
+        (self.snake.x >= WIDTH-GRIDSIZE or (self.snake.x+GRIDSIZE, self.snake.y) in body_pos):
             # obstacle at east
             new_state[9] = 1
         if self.snake.direction != "U" and \
-        (self.snake.y == pos_to_pixel(HEIGHT-1) or pos_to_pixel(self.snake.y-1) in body_y):
+        (self.snake.y >= HEIGHT-GRIDSIZE or (self.snake.x, self.snake.y+GRIDSIZE) in body_pos):
             # obstacle at south
             new_state[10] = 1
         if self.snake.direction != "R" and \
-        (self.snake.x == 0 or pos_to_pixel(self.snake.x-1) in body_x):
+        (self.snake.x <= 0 or (self.snake.x-GRIDSIZE, self.snake.y) in body_pos):
             # obstacle at west
             new_state[11] = 1
 
@@ -201,21 +202,22 @@ class snakeEnv():
             self.snake.deleteTail()
         else:
             # eat apple
-            self.apple.move()
+            avoid = [(rect.x, rect.y) for rect in self.snake.body]
+            self.apple.move(avoid=avoid)
             reward_ = 10
 
         next_state = self.update_state()
 
-        
-        pos_next = [self.snake.x, self.snake.y]
-        pos_apple = [self.apple.x, self.apple.y]
-        d1 = euclidean(pos_apple, pos_current)
-        d2 = euclidean(pos_apple, pos_next)
+        if reward_ == 0:
+            pos_next = [self.snake.x, self.snake.y]
+            pos_apple = [self.apple.x, self.apple.y]
+            d1 = euclidean(pos_apple, pos_current)
+            d2 = euclidean(pos_apple, pos_next)
 
-        if d1 > d2:
-            reward_ = 1
-        else:
-            reward_ = -1
+            if d1 > d2:
+                reward_ = 1
+            else:
+                reward_ = -1
 
         return next_state, reward_, self.done, self.update_score()
 
@@ -251,7 +253,5 @@ class snakeEnv():
         fpsClock.tick(FPS)
 
 
-# Main
-
-env = snakeEnv()
-# print("hello")
+if __name__ == "__main__":
+    env = snakeEnv()

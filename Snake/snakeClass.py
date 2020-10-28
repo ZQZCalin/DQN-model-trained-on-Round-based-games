@@ -123,9 +123,52 @@ class Apple:
         self.board_y = board_y
         self.rect = Rect(self.x, self.y, self.boxLength, self.boxLength)
 
-    def move(self):
-        random_x = random.randrange(0, (self.board_x - self.boxLength), self.boxLength)
-        random_y = random.randrange(0, (self.board_y - self.boxLength), self.boxLength)
+    def move(self, avoid=None):
+        # avoid: a list of (x,y)
+        while True:
+            random_x = random.randrange(0, (self.board_x - self.boxLength), self.boxLength)
+            random_y = random.randrange(0, (self.board_y - self.boxLength), self.boxLength)
+            if avoid == None or not (random_x, random_y) in avoid:
+                break
+
         self.rect = Rect(random_x, random_y, self.boxLength, self.boxLength)
         self.x = random_x
         self.y = random_y
+
+class Wall():
+    """
+    Wall Object
+    """
+
+    def __init__(self, size, body):
+
+        self.size = size
+        self.pos = []
+        self.body = []
+
+    def reset_pos(self, mode=0, pos=None):
+        """ Reset Wall, modes:
+            - -1: empty (no walls)
+            - 0: only four walls
+            - 1: random obstacles
+            - 2: user-input walls
+        """
+        self.pos = []
+
+        if mode == 0:
+            None
+
+        if mode == 1:
+            None
+
+        if mode == 2:
+            self.pos = pos
+
+        
+
+    def reset_body(self):
+        # reset body of wall using self.pos
+
+        self.body = []
+        for (x,y) in self.pos:
+            body.append(Rect(x, y, self.size, self.size))

@@ -5,10 +5,13 @@ import importlib
 import random
 # import gym
 import numpy as np
+import pandas as pd
 from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
+from config import *
+from util import *
 
 ### DQN Agent
 
@@ -54,6 +57,7 @@ class Agent():
             self.model = model
         
         self.memory = deque(maxlen=2000)
+        self.rare_memory = deque(maxlen=500)
 
     def _build_model(self):
         """
@@ -69,7 +73,7 @@ class Agent():
         model.add(Dense(128, input_dim=self.state_size, activation="relu"))
         model.add(Dense(128, activation="relu"))
         model.add(Dense(128, activation="relu"))
-        model.add(Dense(self.action_size, activation="softmax"))
+        model.add(Dense(self.action_size, activation="linear"))
 
         # model.compile(loss="categorical_crossentropy", optimizer=Adam(lr=self.learning_rate))
         model.compile(loss="mse", optimizer=Adam(lr=self.learning_rate))
@@ -114,7 +118,11 @@ class Agent():
             - input X: current state s^t
             - target y:
         """
-        mini_batch = random.sample(self.memory, batch_size)
+        if len(self.memory) < batch_size:
+            return
+
+        mini_batch = random.sample(self.memory, batch_size) \
+            + random.sample(self.rare_memory, min(round(batch_size/4), len(self.rare_memory)))
 
         for state, action, reward, next_state, done in mini_batch:
             target = reward
@@ -156,11 +164,14 @@ def train_DQN(env, agent, params=None):
     # fetch parameters
     state_size = STATE_SIZE 
     action_size = ACTION_SIZE
+
     batch_size = BATCH_SIZE
     n_episodes = N_TRAINS
     max_moves = MAX_MOVES_TRAIN
-    model_dir = MODEL_DIR
-    output_dir = TRAIN_WEIGHT
+
+    output_dir = TRAIN_WEIGHT       # weight directory
+    output_file = PERFORMANCE_FILE  # performance
+
     fps = FPS_TRAIN
     # state_size = params["state_size"]
     # action_size = params["action_size"]
@@ -169,56 +180,79 @@ def train_DQN(env, agent, params=None):
     # max_moves = params["max_moves"]
     # output_dir = params["output_dir"]
 
-    # create output directory if not exists
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    else:
-        overwrite = input("Are you sure to overwrite the existing weights? y or n")
-        if overwrite == "n":
-            return
-
     done = 0
 
-    for e in range(n_episodes):
+    # Save data for performance analysis
+    cv_episodes = []
+    cv_cumulated_rewards = []
+    cv_score = []
+    cv_moves = []
+
+    for e in range(1,n_episodes+1):
 
         # Step 1: Initialization
         state = env.reset()
         state = np.reshape(state, [1,state_size])
 
+        cum_reward = 0
+
         # Step 2: Simulate one trial of the game
-        steps = []
-        for _ in range(max_moves):
+        for i in range(1,max_moves+1):
             # visualize the game
-            if fps != 0:
+            pygame.event.pump()
+            if fps != 0 and e % RPE == 0:
                 env.render(FPS=fps)
 
             # simulate action and outcomes
             action = agent.act(state)
-
             next_state, reward, done, score = env.step(action)
-
-            # reward = reward if not done else -10    # penalize game over action
-
             next_state = np.reshape(next_state, [1,state_size])
 
+            # memorize
             agent.remember(state, action, reward, next_state, done)
 
+            # update simulation
             state = next_state
+            cum_reward += reward
+
+            if EXP_REPLAY:
+                agent.replay(batch_size)
 
             if done:
+                # testing line: try to add a new rare_memory
+                agent.rare_memory.append([state, action, reward, next_state, done])
+
                 break
 
         # print the training result
-        print("progress: {}/{}, score: {}, e: {:.2}".format(e,n_episodes,score,agent.epsilon))
+        print("progress: {}/{}, score: {}, e: {:.2}, moves: {}/{}" \
+                .format(e, n_episodes, score, agent.epsilon, i, max_moves))
+        
+        # save training performance
+        cv_episodes.append(e)
+        cv_moves.append(i)
+        cv_score.append(score)
+        cv_cumulated_rewards.append(cum_reward)
 
         # Step 3: Train DQN based on the agent's memory
-        if len(agent.memory) > batch_size:
+        if not EXP_REPLAY:
             agent.replay(batch_size)
-        # agent.replay(min(len(agent.memory), batch_size))
 
         # save model weight every 50 episodes
         if e % 50 == 0:
             agent.save(output_dir + "/weights_" + "{:.0f}".format(e) + ".hdf5")
+    
+    # End of Training
+    train_dict = pd.DataFrame({
+        "episode" : cv_episodes,
+        "cumulative_reward": cv_cumulated_rewards,
+        "moves" : cv_moves,
+        "score" : cv_score
+    })
+    train_dict.to_csv(output_file)
+    print("===== Training completed =====")
+    print("weights are saved to: {}; performance is saved as: {}".format(output_dir, output_file))
+
 
 def test_DQN(env, agent, params=None):
 
@@ -307,6 +341,7 @@ def random_player(env, agent, params, verbose=0):
 if __name__ == "__main__":
 
     # load configuration
+    """
     model_dir = input("Please enter your model directory:\nmodel/")
 
     print("===== loading configuration =====")
@@ -324,22 +359,88 @@ if __name__ == "__main__":
     globals().update({k: getattr(mdl, k) for k in names})
 
     print("===== configuration loaded =====")
+    """
 
-    # create agent
-    AGENT = Agent(STATE_SIZE, ACTION_SIZE, model=SEQUENTIAL)
-
-    MODEL_DIR = "models/" + model_dir
-    TRAIN_WEIGHT = MODEL_DIR + "/model_weight"
-    TEST_WEIGHT = MODEL_DIR + "/" + TEST_WEIGHT
-
-    # train and test
+    # train
     if MODE == "TRAIN":
-        train_DQN(ENV, AGENT)
+        # create model directory
+        if not check_dir(MODEL_DIR, create=True):
+            print("Created model directory as: {}".format(MODEL_DIR))
+
+        # env, agent
+        env = ENV
+        agent = Agent(STATE_SIZE, ACTION_SIZE, model=SEQUENTIAL)
+
+        # params
+        TRAIN_WEIGHT = "{}/{}".format(MODEL_DIR, WEIGHT_DIR)
+        PERFORMANCE_FILE = "{}/performance.csv".format(MODEL_DIR)
+        ENV_AGENT_FILE = "{}/model.pkl".format(MODEL_DIR)
+        CONFIG_FILE = "{}/config.txt".format(MODEL_DIR)
+
+        config = {
+            "name": NAME,
+            "gamma": GAMMA,
+            "epsilon": EPSILON,
+            "epsilon_decay": EPSILON_DECAY,
+            "epsilon_min": EPSILON_MIN,
+            "learning_rate": LEARNING_RATE,
+            "batch_size": BATCH_SIZE,
+            "number_of_trains": N_TRAINS,
+            "max_moves": MAX_MOVES_TRAIN,
+            "notes": NOTES
+        }
+
+        # save env and agent class for test purpose
+        if not save_env_agent(env, agent, ENV_AGENT_FILE):
+            sys.exit()
+        else:
+            print("Environment and agent are saved as: {}".format(ENV_AGENT_FILE))
+        
+        # save config as documentation
+        if not save_config(config, CONFIG_FILE):
+            sys.exit()
+        else:
+            print("Config is saved as: {}".format(CONFIG_FILE))
+        
+        # check weight directory
+        if not os.path.exists(TRAIN_WEIGHT):
+            os.makedir(TRAIN_WEIGHT)
+            print("Created weight directory as: {}".format(TRAIN_WEIGHT))
+        else:
+            text = "Are you sure to overwrite the existing weights?"
+            if not yes_no(text):
+                sys.exit()
+
+        # check performance file
+        if os.path.isfile(PERFORMANCE_FILE):
+            text = "Are you sure to overwrite the existing performance?"
+            if not yes_no(text):
+                sys.exit()
+
+        # train model
+        train_DQN(env, agent)
+    
+    # test
     if MODE == "TEST":
-        test_DQN(ENV, AGENT)
+        # load model
+        if not check_dir(MODEL_DIR, create=False):
+            print("Your model directory does not exist.")
+            sys.exit()
+        
+        TEST_WEIGHT = "{}/{}".format(MODEL_DIR, TEST_WEIGHT)
+        ENV_AGENT_FILE = "{}/model.pkl".format(MODEL_DIR)
+
+        if not os.path.isfile(ENV_AGENT_FILE):
+            print("Testing model does not exist.")
+            sys.exit()
+        
+        env, agent = load_env_agent(ENV_AGENT_FILE)
+
+        # test
+        test_DQN(env, agent)
 
 # ARCHIVED
-if __name__ == "__main__" and False:
+# if __name__ == "__main__" and False:
 
     # GAME = "CartPole-v0"
     GAME = "SNAKE"

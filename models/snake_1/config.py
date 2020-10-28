@@ -44,13 +44,14 @@ REWARD = "NAIVE"
 # training parameters
 N_TRAINS = 1000
 MAX_MOVES_TRAIN = 500
-FPS_TRAIN = 0   # set to 0 to disable render
+FPS_TRAIN = 15   # set to 0 to disable render
 
 # testing parameters
-N_TESTS = 10
-MAX_MOVES_TEST = 500
-TEST_WEIGHT = "test_weight.hdf5"
+N_TESTS = 3
+MAX_MOVES_TEST = 10000
+TEST_WEIGHT = "weights_v2_500.hdf5"
 FPS_TEST = 10   # set to 0 to disable render
 
 # train / test mode
 MODE = "TEST"
+# MODE = "TRAIN"
