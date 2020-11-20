@@ -1,199 +1,36 @@
 ### Import Packages
-
 import sys, os, time 
 import importlib
 import random
-# import gym
 import numpy as np
 import pandas as pd
-from collections import deque
-
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
-tf.compat.v1.reset_default_graph()
-
 from config import *
 from util import *
 
-
-### DQN Agent
-
-class Agent():
-    """
-    Parameters:
-        - state_size: size of state space
-        - action_size: size of action space
-        - memory: a deque of length maxlen (2000) to store game experiences
-        - gamma: coefficient of future rewards
-        - epsilon: exploration coefficient
-            - 1 for max exploration and 0 for max exploitation
-            - initially set to be 1 because we want the agent to explore as much
-              as it can at the beginning
-            - epsilon is decreasing because we want the agent to learn from the
-              past experiences
-        - epsilon_decay: decrease rate of epsilon
-        - epsilon_min: minimum threshold of epsilon
-        - learning_rate: learning rate / step size
-    """
-    def __init__(self, state_size, action_size, model=None):
-        self.state_size = state_size
-        self.action_size = action_size
-
-        # Define Hyper-parameters in config.py
-        self.gamma = GAMMA
-
-        self.epsilon = EPSILON
-        self.epsilon_decay = EPSILON_DECAY 
-        self.epsilon_min = EPSILON_MIN
-
-        self.learning_rate = LEARNING_RATE
-
-        # self.gamma = 0.95
-        # self.epsilon = 1.0
-        # self.epsilon_decay = 0.995
-        # self.epsilon_min = 0.01
-        # self.learning_rate = 0.00025
-
-        if model == None:
-            self.model = self._build_model()
-        else:
-            self.model = model
-        
-        self.memory = deque(maxlen=2000)
-        self.rare_memory = deque(maxlen=500)
-
-    def _build_model(self):
-        """
-        Model: a shallow network of 3 Dense layers
-            - layer 1 (input): Dense of size 24 x state_size
-            - layer 2: Dense of size 24 x 1
-            - layer 3 (output): Dense of size action_size
-            - loss: MSE (an unexpected choice)
-            - optimizer: Adam with lr = self.learning_rate
-        """
-        model = Sequential()
-
-        model.add(Dense(128, input_dim=self.state_size, activation="relu"))
-        model.add(Dense(128, activation="relu"))
-        model.add(Dense(128, activation="relu"))
-        model.add(Dense(self.action_size, activation="linear"))
-
-        # model.compile(loss="categorical_crossentropy", optimizer=Adam(lr=self.learning_rate))
-        model.compile(loss="mse", optimizer=Adam(lr=self.learning_rate))
-
-        return model
-
-    def remember(self, state, action, reward, next_state, done):
-        """
-        stores the game experience into self.memory
-            - parameters: s^t, a^t, r^t, s^{t+1}
-        """
-        self.memory.append([state, action, reward, next_state, done])
-
-    def act(self, state):
-        """
-        Action of the agent (2 modes):
-            - mode 1: explore / act randomly
-                - return a random action
-            - mode 2: exploit
-                - predict an optimal action based on the state and the model
-                - return action with highest reward
-        """
-        if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_size)
-        else:
-            act_value = self.model.predict(state)
-            # TO DO: explain act_value
-            # act_value is a action_size x 1 2D array,
-            # so we fetch act_value[0].
-            # Each element is the predicted reward.
-            return np.argmax(act_value[0])
-
-    def exploit(self, state):
-        """
-        exploit entirely on DQN model without randomness
-        """
-        return np.argmax(self.model.predict(state)[0])
-
-    def replay(self, batch_size):
-        """
-        Train the DQN network using memory
-            - input X: current state s^t
-            - target y:
-        """
-        if len(self.memory) < batch_size:
-            return
-
-        mini_batch = random.sample(self.memory, batch_size) \
-            + random.sample(self.rare_memory, min(round(batch_size/4), len(self.rare_memory)))
-
-        for state, action, reward, next_state, done in mini_batch:
-            target = reward
-            if not done:
-                """
-                # predict the reward of the next state
-                future_value = self.model.predict(next_state)
-                # add maximum future reward
-                target += self.gamma * np.amax(future_value[0])
-                """
-                target = reward + self.gamma * np.amax(self.model.predict(next_state)[0])
-            # target / y: max future reward mapped to the currect state
-            target_state = self.model.predict(state)
-            target_state[0][action] = target
-
-            self.model.fit(state, target_state, epochs=1, verbose=0)
-            # To Do: explain why train in this way?
-
-        # decrease epsilon
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
-
-    def load(self, name):
-        """
-        load model weights
-        """
-        self.model.load_weights(name)
-
-    def save(self, name):
-        """
-        save model weights
-        """
-        self.model.save_weights(name)
-
-### Train DQN
-
-def train_DQN(env, agent, params=None):
+def train_DQN(env, agent, params={}):
 
     # fetch parameters
-    state_size = STATE_SIZE 
-    action_size = ACTION_SIZE
+    state_size = params["state_size"]
+    action_size = params["action_size"]
 
-    batch_size = BATCH_SIZE
-    n_episodes = N_TRAINS
-    max_moves = MAX_MOVES_TRAIN
+    batch_size = load_params(params, "batch_size", 64)
+    n_episodes = load_params(params, "n_episodes", 100)
+    max_moves = load_params(params, "max_moves", 1000)
+    FPS = load_param(params, "FPS", 10)
+    experience_replay = load_params(params, "exp_replay", True)
 
-    output_dir = TRAIN_WEIGHT       # weight directory
-    output_file = PERFORMANCE_FILE  # performance
+    model_dir = load_params(params, "model_dir", "my_model")
 
-    fps = FPS_TRAIN
-    # state_size = params["state_size"]
-    # action_size = params["action_size"]
-    # batch_size = params["batch_size"]
-    # n_episodes = params["n_episodes"]
-    # max_moves = params["max_moves"]
-    # output_dir = params["output_dir"]
+    # TRAINING
 
-    done = 0
+    done = False
 
     # Save data for performance analysis
-    cv_episodes = []
-    cv_cumulated_rewards = []
-    cv_score = []
-    cv_moves = []
+    performance = pd.DataFrame.from_dict({
+        "e": [], "reward": [], "score", "move": []
+    })
 
-    for e in range(1,n_episodes+1):
+    for e in range(1, n_episodes+1):
 
         # Step 1: Initialization
         state = env.reset()
@@ -202,7 +39,7 @@ def train_DQN(env, agent, params=None):
         cum_reward = 0
 
         # Step 2: Simulate one trial of the game
-        for i in range(1,max_moves+1):
+        for move in range(1, max_moves+1):
             # visualize the game
             pygame.event.pump()
             if fps != 0 and e % RPE == 0:
@@ -220,24 +57,19 @@ def train_DQN(env, agent, params=None):
             state = next_state
             cum_reward += reward
 
-            if EXP_REPLAY:
+            if experience_replay:
                 agent.replay(batch_size)
 
             if done:
-                # testing line: try to add a new rare_memory
-                agent.rare_memory.append([state, action, reward, next_state, done])
 
                 break
 
         # print the training result
         print("progress: {}/{}, score: {}, e: {:.2}, moves: {}/{}" \
-                .format(e, n_episodes, score, agent.epsilon, i, max_moves))
+                .format(e, n_episodes, score, agent.epsilon, move, max_moves))
         
         # save training performance
-        cv_episodes.append(e)
-        cv_moves.append(i)
-        cv_score.append(score)
-        cv_cumulated_rewards.append(cum_reward)
+        performance.loc[len(performance)] = [e, cum_reward, score, move]
 
         # Step 3: Train DQN based on the agent's memory
         if not EXP_REPLAY:
@@ -304,44 +136,6 @@ def test_DQN(env, agent, params=None):
 
         # print the training result
         print("progress: {}/{}, score: {}".format(e, n_tests, score))
-
-def random_player(env, agent, params, verbose=0):
-    # fetch parameters
-    state_size = params["state_size"]
-    action_size = params["action_size"]
-    max_games = params["max_games"]
-    model_name = params["model_name"]
-
-    # load weights
-    agent.load(model_name)
-
-    # start testing
-    done = False
-
-    # Step 1: Initialization
-    state = env.reset()
-    state = np.reshape(state, [1,state_size])
-    action = 0
-
-    # Step 2: Simulate one trial of the game
-    for score in range(max_games):
-
-        env.render()
-
-        # use exploit() instead of act()
-        action = (action+1) % 2
-
-        if verbose:
-            print(action)
-
-        next_state, reward, done, _ = env.step(action)
-
-        state = np.reshape(next_state, [1,state_size])
-
-        if done:
-            break
-
-    print("score:{}".format(score))
 
 if __name__ == "__main__":
 
