@@ -7,11 +7,16 @@ import random
 import numpy as np
 import pandas as pd
 from collections import deque
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.optimizers import Adam
+
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+tf.compat.v1.reset_default_graph()
+
 from config import *
 from util import *
+
 
 ### DQN Agent
 
@@ -390,11 +395,13 @@ if __name__ == "__main__":
             "notes": NOTES
         }
 
+        """
         # save env and agent class for test purpose
         if not save_env_agent(env, agent, ENV_AGENT_FILE):
             sys.exit()
         else:
             print("Environment and agent are saved as: {}".format(ENV_AGENT_FILE))
+        """
         
         # save config as documentation
         if not save_config(config, CONFIG_FILE):
@@ -440,6 +447,7 @@ if __name__ == "__main__":
         test_DQN(env, agent)
 
 # ARCHIVED
+"""
 # if __name__ == "__main__" and False:
 
     # GAME = "CartPole-v0"
@@ -495,3 +503,4 @@ if __name__ == "__main__":
 
         test_DQN(env, agent, test_params)
         # random_player(env, agent, test_params, verbose=0)
+"""
