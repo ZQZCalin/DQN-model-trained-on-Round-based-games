@@ -94,3 +94,9 @@ def save_to_DataFrame(df, list, columns):
     # dict length and list length must match
     temp_df = pd.DataFrame([list], columns=columns)
     return None
+
+def load_params(params, key, default):
+    try:
+        return params[str(key)]
+    except:
+        return default 

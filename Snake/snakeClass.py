@@ -13,24 +13,33 @@ class Snake:
     - boxSize
     - body"""
 
-    def __init__(self, x, y, length, direction, color, boxSize):
+    def __init__(
+        self, x, y, length=1, direction="R", 
+        boxSize, board_x, board_y
+    ):
         self.x = x
         self.y = y
         self.length = length
         self.direction = direction
-        self.color = color
-        self.boxSize = boxSize
-        self.body = []
 
+        self.boxSize = boxSize
+        self.board_x = board_x
+        self.board_y = board_y
+
+        self.body = []
+        self.head = None
+        self.initialize()
+
+    def initialize(self, avoid=[]):
         k1 = 0
         k2 = 0
         if self.direction == "R":
             k1 = -1
-        if self.direction == "L":
+        elif self.direction == "L":
             k1 = 1
-        if self.direction == "U":
+        elif self.direction == "U":
             k2 = 1
-        if self.direction == "D":
+        elif self.direction == "D":
             k2 = -1
 
         for i in range(self.length):
@@ -40,42 +49,59 @@ class Snake:
             self.body.append(tempRect)
         self.head = self.body[0]
 
-    def addHead(self):
-        if self.direction == 'R':
-            newHead = Rect(self.x + self.boxSize,
-                           self.y, self.boxSize, self.boxSize)
-        elif self.direction == 'L':
-            newHead = Rect(self.x - self.boxSize,
-                           self.y, self.boxSize, self.boxSize)
-        elif self.direction == 'D':
-            newHead = Rect(self.x,
-                           self.y + self.boxSize, self.boxSize, self.boxSize)
-        elif self.direction == 'U':
-            newHead = Rect(self.x,
-                           self.y - self.boxSize, self.boxSize, self.boxSize)
+    def changeDirection(direction):
+        # input: 0,1,2,3
+        DIRECTION = ["U", "R", "D", "L"]
+        current = DIRECION.index(self.direction)
+        opposite = (current + 2) % 4
+
+        if direction != opposite and direction != current:
+            self.direction = DIRECTION[direction]
+
+    def addHead(self, collideWall=True):
+        k1 = 0
+        k2 = 0
+        if self.direction == "R":
+            k1 = 1
+        elif self.direction == "L":
+            k1 = -1
+        elif self.direction == "U":
+            k2 = -1
+        elif self.direction == "D":
+            k2 = 1
+
+        self.x += k1 * self.boxSize
+        self.y += k2 * self.boxSize
+
+        if not collideWall:
+            self.x = self.x % self.board_x
+            self.y = self.y % self.board_y
+
+        newHead = Rect(self.x, self.y, self.boxSize, self.boxSize)
         self.body.insert(0, newHead)
         self.head = self.body[0]
-        self.x = self.head.x
-        self.y = self.head.y
 
     def deleteTail(self):
-        del self.body[-1]
+        return self.body.pop()
 
-    def isDead(self):
+    def addTail(self, rect):
+        this.body.push(rect)
+
+    def collideWithBody(self):
         for part in self.body[1:]:
             if self.head.colliderect(part):
                 return True
         return False
 
-    def isOutOfBounds(self, max_width, max_height):
-        if self.head.x > max_width - self.boxSize:
+    def collideWithWall(self, extraWalls=[]):
+        wallRect = Rect(0, 0, self.board_x, self.board_y)
+        if not wallRect.contains(self.head):
             return True
-        elif self.head.x < 0:
-            return True
-        if self.head.y > max_height - self.boxSize:
-            return True
-        elif self.head.y < 0:
-            return True
+
+        for part in extraWalls:
+            if self.head.colliderect(part):
+                return True
+
         return False
 
     def addHead_snakeTwo(self, max_width, max_height):
@@ -114,61 +140,22 @@ class Apple:
     - x
     - y"""
 
-    def __init__(self, boxLength, x, y, color, board_x, board_y):
+    def __init__(self, boxLength, x, y, board_x, board_y):
         self.boxLength = boxLength
         self.x = x
         self.y = y
-        self.color = color
         self.board_x = board_x
         self.board_y = board_y
         self.rect = Rect(self.x, self.y, self.boxLength, self.boxLength)
 
-    def move(self, avoid=None):
+    def move(self, avoid=[]):
         # avoid: a list of (x,y)
         while True:
-            random_x = random.randrange(0, (self.board_x - self.boxLength), self.boxLength)
-            random_y = random.randrange(0, (self.board_y - self.boxLength), self.boxLength)
-            if avoid == None or not (random_x, random_y) in avoid:
+            random_x = random.randrange(0, self.board_x, self.boxLength)
+            random_y = random.randrange(0, self.board_y, self.boxLength)
+            if not (random_x, random_y) in avoid:
                 break
 
         self.rect = Rect(random_x, random_y, self.boxLength, self.boxLength)
         self.x = random_x
         self.y = random_y
-
-class Wall():
-    """
-    Wall Object
-    """
-
-    def __init__(self, size, body):
-
-        self.size = size
-        self.pos = []
-        self.body = []
-
-    def reset_pos(self, mode=0, pos=None):
-        """ Reset Wall, modes:
-            - -1: empty (no walls)
-            - 0: only four walls
-            - 1: random obstacles
-            - 2: user-input walls
-        """
-        self.pos = []
-
-        if mode == 0:
-            None
-
-        if mode == 1:
-            None
-
-        if mode == 2:
-            self.pos = pos
-
-        
-
-    def reset_body(self):
-        # reset body of wall using self.pos
-
-        self.body = []
-        for (x,y) in self.pos:
-            body.append(Rect(x, y, self.size, self.size))

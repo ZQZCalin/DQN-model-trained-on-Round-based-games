@@ -1,22 +1,11 @@
 from snakeClass import *
 from snakeGame import *
+from util import *
 from numpy.random import randint
 from math import ceil, floor
 import numpy as np
-# import yaml
 import time
 from scipy.spatial.distance import euclidean
-
-
-# file = open('config.yml', 'r')
-# cfg = yaml.load(file, Loader=yaml.FullLoader)
-
-def pos_to_pixel(pos):
-    # convert position to pixel position
-    return floor(pos/GRIDSIZE)*GRIDSIZE
-
-# STATE_SIZE = 12
-# ACTION_SIZE = 4
 
 class snakeEnv():
     """
@@ -54,9 +43,28 @@ class snakeEnv():
     
     """
 
-    def __init__(self):
-        # self.state = np.zeros((STATE_SIZE, ))
-        self.state = np.zeros((12,))
+    def __init__(self, params):
+        # mandatory
+        self.gridSize = params["gridSize"]
+        self.width = paramss["width"]
+        self.height = paramss["height"]
+
+        self.extraWalls = generate_walls()
+
+        # default / optional
+        self.collideWall = load_params("collideWall")
+        self.collideBody = load_params("collideBody")
+        self.extraWalls = load_params("extraWalls")
+
+        self.FPS = load_params("FPS")
+
+        self.stateType = load_params("stateType")
+        self.rewardType = load_params("rewardType")
+        self.rewardValues = load_params("rewardValues")
+
+        self.snakeLength = load_params("snakeLength")
+        self.manualControl = load_params("manualControl")
+
         self.snake = None
         self.apple = None
         self.done = 0
@@ -87,7 +95,16 @@ class snakeEnv():
 
         return self.update_state()
 
+    # =========================================
+    # UPDATE RULES
+    # =========================================
     def update_state(self):
+        if this.stateType == "12bool":
+            return this.update_state_12bool()
+        
+        return
+
+    def update_state_12bool(self):
         # update state from self.snake and self.apple
         # called after self.snake and self.apple are updated
         new_state = np.zeros((self.state_size, ))
@@ -145,6 +162,9 @@ class snakeEnv():
         self.score = self.snake.body.__len__() - SNAKELENGTH
         return self.score
 
+    # =========================================
+    # REWARD RULES
+    # =========================================
     def reward(self, state, next_state):
         # test reward function 1:
         # score of apple v.s. snake, lower score means closer
@@ -161,6 +181,9 @@ class snakeEnv():
         # other cases
         return 0
 
+    # =========================================
+    # STEP FORWARD
+    # =========================================
     def step(self, action):
         """ 
         about reward:
@@ -221,6 +244,9 @@ class snakeEnv():
 
         return next_state, reward_, self.done, self.update_score()
 
+    # =========================================
+    # GAME RENDER
+    # =========================================
     def render(self, FPS=15):
         # this line prevents pygame from being recognized as "crashed" by OS
         pygame.event.pump()
