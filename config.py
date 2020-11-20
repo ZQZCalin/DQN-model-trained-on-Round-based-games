@@ -21,6 +21,7 @@ sys.path.append(os.path.abspath('Snake'))
 from snakeEnv import *
 
 # environment
+# add new environment
 ENV = snakeEnv()
 STATE_SIZE = ENV.state_size
 ACTION_SIZE = ENV.action_size
@@ -56,7 +57,7 @@ SEQUENTIAL = dense_NN({"layer":LAYER, "act": ACTIVATION, "act_out": OUTPUT_ACT,
 # Train parameters
 
 N_TRAINS = 50
-MAX_MOVES_TRAIN = 10000
+MAX_MOVES_TRAIN = 1000
 #   set FPS to 0 to disable render
 FPS_TRAIN = 15
 #   turn on experience_replay to train every move instead of every game
@@ -78,7 +79,7 @@ Performance_Per_Episode = 5
 # testing parameters
 N_TESTS = 10
 MAX_MOVES_TEST = 1000
-TEST_WEIGHT = "model_weights/weights_70.hdf5"
+TEST_WEIGHT = "model_weights/weights_50.hdf5"
 
 #   set to 0 to disable render
 FPS_TEST = 10
@@ -98,10 +99,10 @@ N_THIS = 100    # episode you want to train this time
 
 # train / test mode
 MODE_LIST = ["TRAIN", "TEST", "CONTINUE"]
-MODE = MODE_LIST[1]
+MODE = MODE_LIST[0]
 
 # model directory
-MODEL_DIR = "models/snake_6"
+MODEL_DIR = "models/snake_7"
 
 #---------------------------------------------------------
 # Config parameters
