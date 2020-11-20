@@ -14,7 +14,7 @@ class Snake:
     - body"""
 
     def __init__(
-        self, x, y, length=1, direction="R", 
+        self, x, y, length, direction, 
         boxSize, board_x, board_y
     ):
         self.x = x

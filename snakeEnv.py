@@ -1,10 +1,15 @@
 from snakeClass import *
 from util import *
+from game_config import *
 from numpy.random import randint
 from math import ceil, floor
 import numpy as np
 import time
 from scipy.spatial.distance import euclidean
+import pygame
+from pygame import Rect
+
+pygame.init()
 
 class snakeEnv():
     """
@@ -48,27 +53,27 @@ class snakeEnv():
 
         # mandatory
         self.gridSize = params["gridSize"]
-        self.width = paramss["width"]
-        self.height = paramss["height"]
-
-        self.extraWalls = generate_walls()
+        self.width = params["width"] * self.gridSize
+        self.height = params["height"] * self.gridSize
 
         # default / optional
-        self.collideWall = load_params("collideWall", True)
-        self.collideBody = load_params("collideBody", True)
-        self.extraWalls = load_params("extraWalls", [])
+        self.collideWall = load_params(params, "collideWall", True)
+        self.collideBody = load_params(params, "collideBody", True)
+        self.extraWalls = []
+        for (x, y) in load_params(params, "extraWalls", []):
+            self.extraWalls.append(Rect(x, y, self.gridSize, self.gridSize))
 
-        self.FPS = load_params("FPS", 10)
+        self.FPS = load_params(params, "FPS", 10)
 
-        self.stateType = load_params("stateType", "12bool")
-        self.rewardType = load_params("rewardType", "basic")
+        self.stateType = load_params(params, "stateType", "12bool")
+        self.rewardType = load_params(params, "rewardType", "basic")
         basic_reward = {
             "eat": 10, "die": -100, "closer": 1, "away": -1
         }
-        self.rewardValues = load_params("rewardValues", basic_reward)
+        self.rewardValues = load_params(params, "rewardValues", basic_reward)
 
-        self.snakeLength = load_params("snakeLength", 1)
-        self.manualControl = load_params("manualControl", False)
+        self.snakeLength = load_params(params, "snakeLength", 1)
+        self.manualControl = load_params(params, "manualControl", False)
 
         # initialize
         self.snake = None
@@ -77,6 +82,9 @@ class snakeEnv():
         self.done = False
         self.score = 0
         self.best_score = 0
+
+        self.window = pygame.display.set_mode((self.width, self.height))
+        self.timer  = pygame.time.Clock()
 
         # reward attr
         self.last_snake = None
@@ -99,7 +107,8 @@ class snakeEnv():
 
         self.snake = Snake(
             random_x, random_y, self.snakeLength,
-            self.DIRECTION[randint(0, 4)], self.gridSize
+            self.DIRECTION[randint(0, 4)], 
+            self.gridSize, self.width, self.height
         )
 
         self.apple = Apple(self.gridSize, 0, 0, self.width, self.height)
@@ -119,7 +128,7 @@ class snakeEnv():
     def update_state_12bool(self):
         # update state from self.snake and self.apple
         # called after self.snake and self.apple are updated
-        new_state = np.zeros((self.state_size, ))
+        new_state = np.zeros((12, ))
 
         # Direction of Snake
         if self.snake.direction == "U":
@@ -269,41 +278,49 @@ class snakeEnv():
         # this line prevents pygame from being recognized as "crashed" by OS
         pygame.event.pump()
 
-        # change to self.window!!!
-        WINDOW.fill(BLACK)
+        self.window.fill(BLACK)
 
         #  draw the grid
         for x in range(0, self.width, self.gridSize):
-            pygame.draw.line(WINDOW, GRAY, (x, 0), (x, self.height))
+            pygame.draw.line(self.window, GRAY, (x, 0), (x, self.height))
         for y in range(0, self.height, self.gridSize):
-            pygame.draw.line(WINDOW, GRAY, (0, y), (self.width, y))
+            pygame.draw.line(self.window, GRAY, (0, y), (self.width, y))
 
         #  draw the apple
-        pygame.draw.rect(WINDOW, self.apple.color, self.apple.rect)
+        pygame.draw.rect(self.window, RED, self.apple.rect)
 
         #  draw the snake
         for part in self.snake.body:
-            pygame.draw.rect(WINDOW, self.snake.color, part)
+            pygame.draw.rect(self.window, GREEN, part)
             part_small = part.inflate(-3, -3)
-            pygame.draw.rect(WINDOW, WHITE, part_small, 3)
+            pygame.draw.rect(self.window, WHITE, part_small, 3)
             
         #  draw the score
         scoreFont = pygame.font.Font('freesansbold.ttf', 18)
         fontSurface = scoreFont.render("Score: %d" % self.score, True, WHITE)
-        WINDOW.blit(fontSurface, (self.width - 100, 10))
+        maxScore = scoreFont.render("Best Score: %d" % self.best_score, True, WHITE)
+        self.window.blit(fontSurface, (20, 10))
+        self.window.blit(maxScore, (20, 30))
 
         pygame.display.update()
 
         # adjust speed to FPS
-        fpsClock.tick(FPS)
+        self.timer.tick(self.FPS)
 
     # =========================================
     # UTILS
     # =========================================
     def move_apple(self):
-        avoid = [(rect.x, rect.y) for rect in self.snake.body]
+        avoid = [(rect.x, rect.y) for rect in self.snake.body]\
             + [(rect.x, rect.y) for rect in self.extraWalls]
         self.apple.move(avoid)
 
 if __name__ == "__main__":
-    env = snakeEnv()
+    params = {
+        "gridSize": 20,
+        "width": 20,
+        "height": 20
+    }
+    env = snakeEnv(params)
+    env.reset()
+    env.render()
