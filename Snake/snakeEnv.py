@@ -1,5 +1,4 @@
 from snakeClass import *
-from snakeGame import *
 from util import *
 from numpy.random import randint
 from math import ceil, floor
@@ -44,6 +43,9 @@ class snakeEnv():
     """
 
     def __init__(self, params):
+        # static
+        self.DIRECTION = ["U", "R", "L", "D"]
+
         # mandatory
         self.gridSize = params["gridSize"]
         self.width = paramss["width"]
@@ -52,46 +54,56 @@ class snakeEnv():
         self.extraWalls = generate_walls()
 
         # default / optional
-        self.collideWall = load_params("collideWall")
-        self.collideBody = load_params("collideBody")
-        self.extraWalls = load_params("extraWalls")
+        self.collideWall = load_params("collideWall", True)
+        self.collideBody = load_params("collideBody", True)
+        self.extraWalls = load_params("extraWalls", [])
 
-        self.FPS = load_params("FPS")
+        self.FPS = load_params("FPS", 10)
 
-        self.stateType = load_params("stateType")
-        self.rewardType = load_params("rewardType")
-        self.rewardValues = load_params("rewardValues")
+        self.stateType = load_params("stateType", "12bool")
+        self.rewardType = load_params("rewardType", "basic")
+        basic_reward = {
+            "eat": 10, "die": -100, "closer": 1, "away": -1
+        }
+        self.rewardValues = load_params("rewardValues", basic_reward)
 
-        self.snakeLength = load_params("snakeLength")
-        self.manualControl = load_params("manualControl")
+        self.snakeLength = load_params("snakeLength", 1)
+        self.manualControl = load_params("manualControl", False)
 
+        # initialize
         self.snake = None
         self.apple = None
-        self.done = 0
-        self.score = 0
 
-        # self.state_size = STATE_SIZE
-        # self.action_size = ACTION_SIZE
-        self.state_size = 12
-        self.action_size = 4
+        self.done = False
+        self.score = 0
+        self.best_score = 0
+
+        # reward attr
+        self.last_snake = None
+        self.last_apple = None
+        self.reward_bool = {
+            "eat": False, "closer": False, "away": False
+        } 
 
     def reset(self):
 
-        self.done = 0
+        self.done = False
         self.score = 0
 
-        self.snake = Snake(
-                pos_to_pixel(randint(5*GRIDSIZE, WIDTH-5*GRIDSIZE)), 
-                pos_to_pixel(randint(5*GRIDSIZE, HEIGHT-5*GRIDSIZE)), 
-                SNAKELENGTH, 
-                DIRECTION[randint(0, self.action_size)], 
-                SNAKECOLOR, GRIDSIZE)
+        avoid = [(rect.x, rect.y) for rect in self.extraWalls]
+        while True:
+            random_x = random.randrange(0, self.width, self.gridSize)
+            random_y = random.randrange(0, self.height, self.gridSize)
+            if not (random_x, random_y) in avoid:
+                break
 
-        self.apple = Apple(
-                GRIDSIZE, 
-                pos_to_pixel(randint(0, WIDTH)), 
-                pos_to_pixel(randint(0, HEIGHT)),
-                RED, WIDTH, HEIGHT)
+        self.snake = Snake(
+            random_x, random_y, self.snakeLength,
+            self.DIRECTION[randint(0, 4)], self.gridSize
+        )
+
+        self.apple = Apple(self.gridSize, 0, 0, self.width, self.height)
+        self.apple.move()
 
         return self.update_state()
 
@@ -99,8 +111,8 @@ class snakeEnv():
     # UPDATE RULES
     # =========================================
     def update_state(self):
-        if this.stateType == "12bool":
-            return this.update_state_12bool()
+        if self.stateType == "12bool":
+            return self.update_state_12bool()
         
         return
 
@@ -112,11 +124,11 @@ class snakeEnv():
         # Direction of Snake
         if self.snake.direction == "U":
             new_state[0] = 1
-        if self.snake.direction == "R":
+        elif self.snake.direction == "R":
             new_state[1] = 1
-        if self.snake.direction == "D":
+        elif self.snake.direction == "D":
             new_state[2] = 1
-        if self.snake.direction == "L":
+        elif self.snake.direction == "L":
             new_state[3] = 1
 
         # Apple position (wrt snake head)
@@ -135,114 +147,120 @@ class snakeEnv():
             new_state[7] = 1
         
         # Obstacle (Walls, body) position (wrt snake head)
-        body_x = [rect.x for rect in self.snake.body]
-        body_y = [rect.y for rect in self.snake.body]
         body_pos = [(rect.x, rect.y) for rect in self.snake.body]
+        
         if self.snake.direction != "D" and \
-        (self.snake.y <= 0 or (self.snake.x, self.snake.y-GRIDSIZE) in body_pos):
+        (self.snake.y <= 0 or \
+        (self.snake.x, self.snake.y-self.gridSize) in body_pos):
             # obstacle at north
             new_state[8] = 1
         if self.snake.direction != "L" and \
-        (self.snake.x >= WIDTH-GRIDSIZE or (self.snake.x+GRIDSIZE, self.snake.y) in body_pos):
+        (self.snake.x >= self.width - self.gridSize or \
+        (self.snake.x+self.gridSize, self.snake.y) in body_pos):
             # obstacle at east
             new_state[9] = 1
         if self.snake.direction != "U" and \
-        (self.snake.y >= HEIGHT-GRIDSIZE or (self.snake.x, self.snake.y+GRIDSIZE) in body_pos):
+        (self.snake.y >= self.height - self.gridSize or \
+        (self.snake.x, self.snake.y+self.gridSize) in body_pos):
             # obstacle at south
             new_state[10] = 1
         if self.snake.direction != "R" and \
-        (self.snake.x <= 0 or (self.snake.x-GRIDSIZE, self.snake.y) in body_pos):
+        (self.snake.x <= 0 or \
+        (self.snake.x-self.gridSize, self.snake.y) in body_pos):
             # obstacle at west
             new_state[11] = 1
 
-        self.state = new_state
-        return self.state
-
-    def update_score(self):
-        self.score = self.snake.body.__len__() - SNAKELENGTH
-        return self.score
+        return new_state
 
     # =========================================
     # REWARD RULES
     # =========================================
-    def reward(self, state, next_state):
-        # test reward function 1:
-        # score of apple v.s. snake, lower score means closer
-        s1 = np.sum(state[4:8])
-        s2 = np.sum(next_state[4:8])
+    def reward(self):
+        if self.rewardType == "basic":
+            return self.reward_basic()
 
-        if s1 < s2:
-            # far away from apple
-            return -1
-        if s1 > s2:
-            # closer to apple
-            return 1
+        return 0
 
-        # other cases
+    def clear_reward_bool(self):
+        for key in self.reward_bool.keys():
+            self.reward_bool[key] = False
+
+    def reward_basic(self, state, next_state):
+        if self.done:
+            return self.rewardValues["die"]
+        if self.reward_bool["eat"]:
+            return self.rewardValues["eat"]
+        if self.reward_bool["closer"]:
+            return self.rewardValues["closer"]
+        if self.reward_bool["away"]:
+            return self.rewardValues["away"]
         return 0
 
     # =========================================
     # STEP FORWARD
     # =========================================
-    def step(self, action):
-        """ 
-        about reward:
-        Two base rewards:
-        - die: -100
-        - get apple: 10
-        Additional rewards:
-        - NAIVE:
-            - closer to apple: 1
-            - away from apple: -1
-        - DETECT_ENCLOSE:
-            - 
-        """
-
-        # BE VERY CAREFUL ABOUT THE POSITION & POINTER ISSUES !!!!!
+    def step(self, action=None):
 
         if self.done:
             return
 
-        current_state = self.state
-        current_snake = self.snake
-        pos_current = [current_snake.x, current_snake.y]
+        if (not self.manualControl) and action != None:
+            self.snake.changeDirection(action)
+            self.last_apple = self.apple.rect 
+            self.last_snake = self.snake.head
 
-        reward_ = 0
-
-        # update direction
-        # opposite_direction = (DIRECTION_INVERSE[self.snake.direction] + 2) % 4
-        if action != (DIRECTION_INVERSE[self.snake.direction] + 2) % 4:
-            self.snake.direction = DIRECTION[action]
+        # move forward
+        self.snake.addHead(collideWall=self.collideWall)
         
-        # update game/motion, done, and reward_
-        self.snake.addHead()
-        if self.snake.isDead() or self.snake.isOutOfBounds(WIDTH, HEIGHT):
-            # game-over
-            self.done = 1
-            reward_ = -100
-        if not(self.snake.head.colliderect(self.apple.rect)):
-            # not eat apple
-            self.snake.deleteTail()
+        temp_tail = None 
+        if self.snake.collideWithWall(self.extraWalls):
+            # wall collision
+            self.game_over()
         else:
+            # delete tail
+            temp_tail = this.snake.deleteTail()
+        if self.snake.collideWithBody():
+            # body collisioni
+            self.game_over()
+        if self.snake.head.colliderect(self.apple.rect):
             # eat apple
-            avoid = [(rect.x, rect.y) for rect in self.snake.body]
-            self.apple.move(avoid=avoid)
-            reward_ = 10
+            self.snake.addTail(temp_tail)
+            self.move_apple()
+            self.score += 1
+            if self.score > self.best_score:
+                self.best_score = self.score
 
+        # conclude end of round
+        if self.manualControl:
+            return
+        else:
+            return self.conclude_round()
+
+    def conclude_round(self):
+        # update reward
+        self.reward_bool["eat"] = not (self.apple.rect.x == self.last_apple.x \
+            and self.apple.rect.y == self.last_apple.y)
+        self.last_distance = euclidean(
+            [self.last_snake.x, self.last_snake.y],
+            [self.last_apple.x, self.last_apple.y]
+        )
+        self.distance = euclidean(
+            [self.snake.head.x, self.snake.head.y],
+            [self.apple.rect.x, self.apple.rect.y]
+        )
+        self.reward_bool["closer"] = distance < last_distance
+        self.reward_bool["away"] = distance > last_distance
+        
+        reward = self.reward()
+        self.clear_reward_bool()
+
+        # update state
         next_state = self.update_state()
 
-        if reward_ == 0:
-            pos_next = [self.snake.x, self.snake.y]
-            pos_apple = [self.apple.x, self.apple.y]
-            d1 = euclidean(pos_apple, pos_current)
-            d2 = euclidean(pos_apple, pos_next)
+        return [next_state, reward, self.done, self.score]
 
-            if d1 > d2:
-                reward_ = 1
-            else:
-                reward_ = -1
-
-        return next_state, reward_, self.done, self.update_score()
+    def game_over(self):
+        self.done = True
 
     # =========================================
     # GAME RENDER
@@ -251,13 +269,14 @@ class snakeEnv():
         # this line prevents pygame from being recognized as "crashed" by OS
         pygame.event.pump()
 
+        # change to self.window!!!
         WINDOW.fill(BLACK)
 
         #  draw the grid
-        for x in range(0, WIDTH, GRIDSIZE):
-            pygame.draw.line(WINDOW, GRAY, (x, 0), (x, HEIGHT))
-        for y in range(0, HEIGHT, GRIDSIZE):
-            pygame.draw.line(WINDOW, GRAY, (0, y), (WIDTH, y))
+        for x in range(0, self.width, self.gridSize):
+            pygame.draw.line(WINDOW, GRAY, (x, 0), (x, self.height))
+        for y in range(0, self.height, self.gridSize):
+            pygame.draw.line(WINDOW, GRAY, (0, y), (self.width, y))
 
         #  draw the apple
         pygame.draw.rect(WINDOW, self.apple.color, self.apple.rect)
@@ -271,13 +290,20 @@ class snakeEnv():
         #  draw the score
         scoreFont = pygame.font.Font('freesansbold.ttf', 18)
         fontSurface = scoreFont.render("Score: %d" % self.score, True, WHITE)
-        WINDOW.blit(fontSurface, (WIDTH - 100, 10))
+        WINDOW.blit(fontSurface, (self.width - 100, 10))
 
         pygame.display.update()
 
         # adjust speed to FPS
         fpsClock.tick(FPS)
 
+    # =========================================
+    # UTILS
+    # =========================================
+    def move_apple(self):
+        avoid = [(rect.x, rect.y) for rect in self.snake.body]
+            + [(rect.x, rect.y) for rect in self.extraWalls]
+        self.apple.move(avoid)
 
 if __name__ == "__main__":
     env = snakeEnv()
