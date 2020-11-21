@@ -157,25 +157,27 @@ class snakeEnv():
         
         # Obstacle (Walls, body) position (wrt snake head)
         body_pos = [(rect.x, rect.y) for rect in self.snake.body]
+        wall_pos = [(rect.x, rect.y) for rect in self.extraWalls]
+        obstacles = body_pos + wall_pos
         
         if self.snake.direction != "D" and \
         (self.snake.y <= 0 or \
-        (self.snake.x, self.snake.y-self.gridSize) in body_pos):
+        (self.snake.x, self.snake.y-self.gridSize) in obstacles):
             # obstacle at north
             new_state[8] = 1
         if self.snake.direction != "L" and \
         (self.snake.x >= self.width - self.gridSize or \
-        (self.snake.x+self.gridSize, self.snake.y) in body_pos):
+        (self.snake.x+self.gridSize, self.snake.y) in obstacles):
             # obstacle at east
             new_state[9] = 1
         if self.snake.direction != "U" and \
         (self.snake.y >= self.height - self.gridSize or \
-        (self.snake.x, self.snake.y+self.gridSize) in body_pos):
+        (self.snake.x, self.snake.y+self.gridSize) in obstacles):
             # obstacle at south
             new_state[10] = 1
         if self.snake.direction != "R" and \
         (self.snake.x <= 0 or \
-        (self.snake.x-self.gridSize, self.snake.y) in body_pos):
+        (self.snake.x-self.gridSize, self.snake.y) in obstacles):
             # obstacle at west
             new_state[11] = 1
 
@@ -194,7 +196,7 @@ class snakeEnv():
         for key in self.reward_bool.keys():
             self.reward_bool[key] = False
 
-    def reward_basic(self, state, next_state):
+    def reward_basic(self):
         if self.done:
             return self.rewardValues["die"]
         if self.reward_bool["eat"]:
@@ -227,7 +229,7 @@ class snakeEnv():
             self.game_over()
         else:
             # delete tail
-            temp_tail = this.snake.deleteTail()
+            temp_tail = self.snake.deleteTail()
         if self.snake.collideWithBody():
             # body collisioni
             self.game_over()
@@ -249,11 +251,11 @@ class snakeEnv():
         # update reward
         self.reward_bool["eat"] = not (self.apple.rect.x == self.last_apple.x \
             and self.apple.rect.y == self.last_apple.y)
-        self.last_distance = euclidean(
+        last_distance = euclidean(
             [self.last_snake.x, self.last_snake.y],
             [self.last_apple.x, self.last_apple.y]
         )
-        self.distance = euclidean(
+        distance = euclidean(
             [self.snake.head.x, self.snake.head.y],
             [self.apple.rect.x, self.apple.rect.y]
         )
@@ -274,7 +276,10 @@ class snakeEnv():
     # =========================================
     # GAME RENDER
     # =========================================
-    def render(self, FPS=self.FPS):
+    def render(self, FPS=-1):
+        if FPS == -1:
+            FPS = self.FPS
+
         # this line prevents pygame from being recognized as "crashed" by OS
         pygame.event.pump()
 

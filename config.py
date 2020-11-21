@@ -57,7 +57,7 @@ LOSS = "mse"
 
 BATCH_SIZE = 512
 
-N_TRAINS = 50
+N_TRAINS = 100
 MAX_MOVES_TRAIN = 1000
 #   set FPS to 0 to disable render
 FPS_TRAIN = 15
@@ -66,7 +66,7 @@ EXPERIENCE_REPLAY = True
 #   render per RPE episodes
 Render_Per_Episode = 1
 #   save (weight, model, performance) every WPE episodes
-Save_Per_Episode = 5
+Save_Per_Episode = 1
 
 #---------------------------------------------------------
 # testing parameters

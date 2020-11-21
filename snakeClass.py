@@ -1,7 +1,6 @@
 from pygame import Rect
 import random
 
-
 class Snake:
     """Snake object for snake game.
     Attributes:
@@ -49,10 +48,10 @@ class Snake:
             self.body.append(tempRect)
         self.head = self.body[0]
 
-    def changeDirection(direction):
+    def changeDirection(self, direction):
         # input: 0,1,2,3
         DIRECTION = ["U", "R", "D", "L"]
-        current = DIRECION.index(self.direction)
+        current = DIRECTION.index(self.direction)
         opposite = (current + 2) % 4
 
         if direction != opposite and direction != current:
@@ -85,7 +84,7 @@ class Snake:
         return self.body.pop()
 
     def addTail(self, rect):
-        this.body.push(rect)
+        self.body.append(rect)
 
     def collideWithBody(self):
         for part in self.body[1:]:

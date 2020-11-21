@@ -46,11 +46,20 @@ if __name__ == "__main__":
             sys.exit()
         else:
             print("Config is saved as: {}".format(path_config))
+
+        # check agent model directory
+        path_model = "{}/model".format(MODEL_DIR)
+        if os.path.exists(path_model):
+            text = "Are you sure to overwrite the existing model?"
+            if not yes_no(text):
+                sys.exit()
+        else:
+            agent.save_model(path_model)
         
         # check weight directory
         path_weight = "{}/weights".format(MODEL_DIR)
         if not os.path.exists(path_weight):
-            os.makedir(path_weight)
+            os.mkdir(path_weight)
             print("Created weight directory as: {}".format(path_weight))
         else:
             text = "Are you sure to overwrite the existing weights?"
@@ -59,7 +68,10 @@ if __name__ == "__main__":
 
         # check performance file
         path_performance = "{}/performance".format(MODEL_DIR)
-        if os.path.isfile(PERFORMANCE_FILE):
+        if not os.path.exists(path_performance):
+            os.mkdir(path_performance)
+            print("Created weight directory as: {}".format(path_performance))
+        else:
             text = "Are you sure to overwrite the existing performance?"
             if not yes_no(text):
                 sys.exit()

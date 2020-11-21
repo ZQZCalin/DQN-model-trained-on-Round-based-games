@@ -1,10 +1,16 @@
 import random
 from collections import deque
 import tensorflow as tf
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
+# for tensorflow 1.0
+from keras.models import Sequential, load_model
+from keras.layers import Dense
+from keras.optimizers import Adam
 from util import *
+import numpy as np
+# for tensorflow 2.0
+# from tensorflow.keras.models import Sequential, load_model
+# from tensorflow.keras.layers import Dense
+# from tensorflow.keras.optimizers import Adam
 
 class Agent():
     """

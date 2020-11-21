@@ -3,6 +3,7 @@ import random
 import numpy as np
 import pandas as pd
 from util import *
+import pygame
 
 def train_DQN(env, agent, params={}):
 
@@ -13,7 +14,7 @@ def train_DQN(env, agent, params={}):
     batch_size = load_params(params, "batch_size", 64)
     n_episodes = load_params(params, "n_episodes", 100)
     max_moves = load_params(params, "max_moves", 1000)
-    FPS = load_param(params, "FPS", 10)
+    FPS = load_params(params, "FPS", 10)
     experience_replay = load_params(params, "exp_replay", True)
 
     model_dir = load_params(params, "model_dir", "my_model")
@@ -25,7 +26,7 @@ def train_DQN(env, agent, params={}):
 
     # Save data for performance analysis
     performance = pd.DataFrame.from_dict({
-        "e": [], "reward": [], "score", "move": []
+        "e": [], "reward": [], "score": [], "move": []
     })
 
     for e in range(1, n_episodes+1):
@@ -40,7 +41,7 @@ def train_DQN(env, agent, params={}):
         for move in range(1, max_moves+1):
             # visualize the game
             pygame.event.pump()
-            if fps != 0:
+            if FPS != 0:
                 env.render(FPS=FPS)
 
             # simulate action and outcomes
