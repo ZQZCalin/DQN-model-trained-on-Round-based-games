@@ -1,6 +1,3 @@
-import sys, os
-from util import *
-
 """
 In this document, you need to fill in the parameters of your model.
 - If you choose to train: 
@@ -13,24 +10,30 @@ In this document, you need to fill in the parameters of your model.
 """
 
 #---------------------------------------------------------
-# Environment parameters
+# Environment Parameters
+GRIDSIZE = 20
+WIDTH  = 20
+HEIGHT = 20
 
-# import the environment directory
-sys.path.append(os.path.abspath('Snake'))
-# make sure you add "../name" to the system path
-from snakeEnv import *
+COLLIDE_WALL = True
+COLLIDE_BODY = True
+EXTRA_WALLS  = [(x,10) for x in range(6,15)] + [(x,11) for x in range(6,15)] + [(x,11) for x in range(6,15)]
 
-# environment
-# add new environment
-ENV = snakeEnv()
-STATE_SIZE = ENV.state_size
-ACTION_SIZE = ENV.action_size
+STATE_TYPE = "12bool"
+REWARD_TYPE = "basic"
+REWARD_VALUES = {
+    "eat": 10, "die": -100, "closer": 1, "away": -1
+}
 
+SNAKE_LENGTH = 1
+MANUAL_CONTROL = False
+
+STATE_SIZE = 12
+ACTION_SIZE = 4
 
 #---------------------------------------------------------
 # Agent Parameters
 
-# DQN hyper-parameters
 GAMMA = 0.95
 
 EPSILON = 1.0
@@ -39,22 +42,20 @@ EPSILON_MIN = 0.01
 
 LEARNING_RATE = 0.00025
 
-BATCH_SIZE = 512
-
 # DQN Sequential
 # Here we provide a Dense Layer models
 LAYER = [128, 128, 128]
 ACTIVATION = "relu"
 OUTPUT_ACT = "linear"
 LOSS = "mse"
-
-SEQUENTIAL = dense_NN({"layer":LAYER, "act": ACTIVATION, "act_out": OUTPUT_ACT,
-    "loss":LOSS, "input":STATE_SIZE, "output":ACTION_SIZE, "lr":LEARNING_RATE})
-# SEQUENTIAL = None # uncomment if you want to use the default model
+# If you choose to define your own model,
+# please go to main.py
 
 
 #---------------------------------------------------------
 # Train parameters
+
+BATCH_SIZE = 512
 
 N_TRAINS = 50
 MAX_MOVES_TRAIN = 1000
@@ -62,18 +63,10 @@ MAX_MOVES_TRAIN = 1000
 FPS_TRAIN = 15
 #   turn on experience_replay to train every move instead of every game
 EXPERIENCE_REPLAY = True
-#   penalize death
-PENALIZE_DEATH = False
 #   render per RPE episodes
 Render_Per_Episode = 1
-#   document path
-WEIGHT_DIR = "model_weights"
-ENV_AG_DIR = "env_agent_backup"
-PERFORMANCE_DIR = "performance_backup"
 #   save (weight, model, performance) every WPE episodes
-Weight_Per_Episode = 5
-Model_Per_Episode = 5
-Performance_Per_Episode = 5
+Save_Per_Episode = 5
 
 #---------------------------------------------------------
 # testing parameters
@@ -105,12 +98,11 @@ MODE = MODE_LIST[0]
 MODEL_DIR = "models/snake_7"
 
 #---------------------------------------------------------
-# Config parameters
-
-NAME = "SNAKE"
-
-# Add additional notes
-# Please document the features of the model that cannot be recorded by values
-# You can also go to "config.txt" to add this manually
-NOTES = "Naive reward\nDense [128,128,128] with relu\n" + \
-    "Output with linear\nLoss: mse\nExperience replay: On"
+# Please add additional NOTES below
+"""
+Naive reward
+Dense [128,128,128] with relu
+Output with linear
+Loss: mse
+Experience replay: On
+"""

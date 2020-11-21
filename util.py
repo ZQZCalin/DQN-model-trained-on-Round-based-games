@@ -4,6 +4,7 @@ from tensorflow.keras.optimizers import Adam
 import pickle
 import sys, os
 import pandas as pd
+from shutil import copyfile
 
 def dense_NN(dict):
 
@@ -84,6 +85,20 @@ def save_config(config, file):
             else:
                 f.write("{} = {}\n".format(key, str(config[key])))
 
+    return True
+
+def save_config_py(file):
+    if os.path.isfile(file):
+        text = "Are you sure to overwrite the existing config.txt file?\n" + \
+            "(Strongly not recommended. If you choose to train a new model," + \
+            "please use another directory)"
+        if not yes_no(text):
+            return False
+    if not os.path.isfile("config.py"):
+        print("config.py does not exist.")
+        return False 
+    
+    copyfile("config.py", file)
     return True
 
 def continue_training():

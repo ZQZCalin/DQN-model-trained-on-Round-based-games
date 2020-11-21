@@ -61,7 +61,7 @@ class snakeEnv():
         self.collideBody = load_params(params, "collideBody", True)
         self.extraWalls = []
         for (x, y) in load_params(params, "extraWalls", []):
-            self.extraWalls.append(Rect(x, y, self.gridSize, self.gridSize))
+            self.extraWalls.append(Rect(x*self.gridSize, y*self.gridSize, self.gridSize, self.gridSize))
 
         self.FPS = load_params(params, "FPS", 10)
 
@@ -274,11 +274,11 @@ class snakeEnv():
     # =========================================
     # GAME RENDER
     # =========================================
-    def render(self, FPS=15):
+    def render(self, FPS=self.FPS):
         # this line prevents pygame from being recognized as "crashed" by OS
         pygame.event.pump()
 
-        self.window.fill(BLACK)
+        self.window.fill(WHITE)
 
         #  draw the grid
         for x in range(0, self.width, self.gridSize):
@@ -294,18 +294,22 @@ class snakeEnv():
             pygame.draw.rect(self.window, GREEN, part)
             part_small = part.inflate(-3, -3)
             pygame.draw.rect(self.window, WHITE, part_small, 3)
+
+        # draw extra walls
+        for part in self.extraWalls:
+            pygame.draw.rect(self.window, GRAY, part)
             
         #  draw the score
         scoreFont = pygame.font.Font('freesansbold.ttf', 18)
-        fontSurface = scoreFont.render("Score: %d" % self.score, True, WHITE)
-        maxScore = scoreFont.render("Best Score: %d" % self.best_score, True, WHITE)
+        fontSurface = scoreFont.render("Score: %d" % self.score, True, BLACK)
+        maxScore = scoreFont.render("Best Score: %d" % self.best_score, True, BLACK)
         self.window.blit(fontSurface, (20, 10))
         self.window.blit(maxScore, (20, 30))
 
         pygame.display.update()
 
         # adjust speed to FPS
-        self.timer.tick(self.FPS)
+        self.timer.tick(FPS)
 
     # =========================================
     # UTILS

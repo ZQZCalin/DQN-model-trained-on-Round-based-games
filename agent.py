@@ -43,7 +43,6 @@ class Agent():
             self.model = model
         
         self.memory = deque(maxlen=2000)
-        self.rare_memory = deque(maxlen=500)
 
     def _build_model(self):
         """
