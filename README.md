@@ -8,7 +8,7 @@ To train the model, users need to follow the instructions.
     - step(action): given an action, move the game one step forward and return a list [next_state, reward, done, score]
     - render(FPS): render the game every FPS seconds.
 2. In "main.py", create a new environment class.
-3. In "config.py", update the hyperparameters of the agent class. In "main.py", create a DQN model for the agent. In "main.py", create a new agent class.
+3. In "config.py" https://github.com/ZQZCalin/DQN-model-trained-on-Round-based-games/blob/main/config.py, update the hyperparameters of the agent class. In "main.py", create a DQN model for the agent. In "main.py", create a new agent class.
 4. In "config.py", modify training and testing parameters; add additional remarks of the model.
 5. Run "main.py". The new file will be saved to the specified "MODEL_DIR", and will contain: the DQN model, the weights, the performance table, and the configuration.
 
