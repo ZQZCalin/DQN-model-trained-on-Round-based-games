@@ -9,7 +9,7 @@ To train the model, users need to follow the instructions.
     - render(FPS): render the game every FPS seconds.
 2. In [main.py](https://github.com/ZQZCalin/DQN-model-trained-on-Round-based-games/blob/main/main.py), create a new environment class.
 3. In [config.py](https://github.com/ZQZCalin/DQN-model-trained-on-Round-based-games/blob/main/config.py), update the hyperparameters of the agent class. In [main.py](https://github.com/ZQZCalin/DQN-model-trained-on-Round-based-games/blob/main/main.py), create a DQN model for the agent. In [main.py](https://github.com/ZQZCalin/DQN-model-trained-on-Round-based-games/blob/main/main.py), create a new agent class.
-4. In [config.py](https://github.com/ZQZCalin/DQN-model-trained-on-Round-based-games/blob/main/config.py), modify training and testing parameters; add additional remarks of the model. See [HERE](#appendix:-hyperparameters) for additional explanations of each parameter.
+4. In [config.py](https://github.com/ZQZCalin/DQN-model-trained-on-Round-based-games/blob/main/config.py), modify training and testing parameters; add additional remarks of the model. See [HERE](#hyperparameters) for additional explanations of each parameter.
 5. Run [main.py](https://github.com/ZQZCalin/DQN-model-trained-on-Round-based-games/blob/main/main.py). The new file will be saved to the specified "MODEL_DIR", and will contain: the DQN model, the weights, the performance table, and the configuration.
 
 #### Testing Single Model
@@ -19,7 +19,7 @@ To test the model you trained, change the MODE in [config.py](https://github.com
 
 ---
 
-#### Appendix: Hyperparameters
+#### Hyperparameters
 This section documents each parameter in [config.py](https://github.com/ZQZCalin/DQN-model-trained-on-Round-based-games/blob/main/config.py).
 1. Environment Parameters:
 2. Agent Parameters:
@@ -32,7 +32,7 @@ This section documents each parameter in [config.py](https://github.com/ZQZCalin
         - LAYER: a list of integers of the layer size, e.g., [128, 128, 128]
         - ACTIVATION: activation function of intermediate Dense layers, e.g., "relu"
         - OUTPUT_ACT: activation function of the output layer, e.g., linear
-        - LOSS: loss function; for Snake game, "mse" is recommended
+        - LOSS: loss function; for Snake game, "mse" is recommended \
     If you choose to use a customized model, you should go to [main.py](https://github.com/ZQZCalin/DQN-model-trained-on-Round-based-games/blob/main/main.py) and define the model by yourself.
 3. Training Parameters:
     - BATCH_SIZE: batch_size, default = 64; for Snake game, 512 is recommended
