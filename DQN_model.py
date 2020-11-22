@@ -83,20 +83,11 @@ def train_DQN(env, agent, params={}):
 def test_DQN(env, agent, params=None):
 
     # fetch parameters
-    state_size = STATE_SIZE
-    action_size = ACTION_SIZE
-    n_tests = N_TESTS
-    max_moves = MAX_MOVES_TEST
-    model_name = TEST_WEIGHT
-    fps = FPS_TEST
-    # state_size = params["state_size"]
-    # action_size = params["action_size"]
-    # n_tests = params["n_tests"]
-    # max_games = params["max_games"]
-    # model_name = params["model_name"]
-
-    # load weights
-    agent.load(model_name)
+    state_size = params["state_size"]
+    action_size = params["action_size"]
+    n_tests = load_params(params, "n_tests", 10)
+    max_moves = load_params(params, "max_games", 500)
+    FPS = load_params(params, "FPS", 10)
 
     # start testing
     done = 0
@@ -110,8 +101,8 @@ def test_DQN(env, agent, params=None):
         # Step 2: Simulate one trial of the game
         for _ in range(max_moves):
 
-            if fps != 0:
-                env.render(FPS=fps)
+            if FPS != 0:
+                env.render(FPS=FPS)
 
             # use exploit() instead of act()
             action = agent.exploit(state)

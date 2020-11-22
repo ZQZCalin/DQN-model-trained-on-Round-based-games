@@ -17,8 +17,7 @@ HEIGHT = 20
 
 COLLIDE_WALL = True
 COLLIDE_BODY = True
-# EXTRA_WALLS  = [(x,10) for x in range(6,15)] + [(x,11) for x in range(6,15)] + [(x,11) for x in range(6,15)]
-EXTRA_WALLS = []
+EXTRA_WALLS  = [(x,10) for x in range(6,15)] + [(x,11) for x in range(6,15)] + [(x,11) for x in range(6,15)]
 
 STATE_TYPE = "12bool"
 REWARD_TYPE = "basic"
@@ -73,10 +72,10 @@ Save_Per_Episode = 1
 # testing parameters
 N_TESTS = 10
 MAX_MOVES_TEST = 1000
-TEST_WEIGHT = "weights/100.hdf5"
+TEST_WEIGHT = "model_weights/weights_50.hdf5"
 
 #   set to 0 to disable render
-FPS_TEST = 15
+FPS_TEST = 10
 
 #---------------------------------------------------------
 # continue training
@@ -93,7 +92,7 @@ N_THIS = 100    # episode you want to train this time
 
 # train / test mode
 MODE_LIST = ["TRAIN", "TEST", "CONTINUE"]
-MODE = MODE_LIST[1]
+MODE = MODE_LIST[0]
 
 # model directory
 MODEL_DIR = "models/snake_7"

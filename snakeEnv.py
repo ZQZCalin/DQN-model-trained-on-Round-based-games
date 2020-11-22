@@ -112,7 +112,7 @@ class snakeEnv():
         )
 
         self.apple = Apple(self.gridSize, 0, 0, self.width, self.height)
-        self.apple.move()
+        self.move_apple()
 
         return self.update_state()
 

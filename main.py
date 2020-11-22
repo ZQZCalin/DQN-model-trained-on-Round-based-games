@@ -47,14 +47,25 @@ if __name__ == "__main__":
         else:
             print("Config is saved as: {}".format(path_config))
 
-        # check agent model directory
-        path_model = "{}/model".format(MODEL_DIR)
-        if os.path.exists(path_model):
-            text = "Are you sure to overwrite the existing model?"
-            if not yes_no(text):
-                sys.exit()
-        else:
-            agent.save_model(path_model)
+        # check agent model
+        if tf.__version__[0] == "2":
+            # tf 2 save model
+            path_model = "{}/model".format(MODEL_DIR)
+            if os.path.exists(path_model):
+                text = "Are you sure to overwrite the existing model?"
+                if not yes_no(text):
+                    sys.exit()
+            else:
+                agent.save_model(path_model)
+        elif tf.__version__[0] == "1":
+            # tf 1 save model
+            path_model = "{}/model.h5".format(MODEL_DIR)
+            if os.path.isfile(path_model):
+                text = "Are you sure to overwrite the existing model?"
+                if not yes_no(text):
+                    sys.exit()
+            else:
+                agent.save_model(path_model)
         
         # check weight directory
         path_weight = "{}/weights".format(MODEL_DIR)
@@ -81,19 +92,28 @@ if __name__ == "__main__":
     
     # test
     if MODE == "TEST":
-        # load model
+        # load directory
         if not check_dir(MODEL_DIR, create=False):
             print("Your model directory does not exist.")
             sys.exit()
         
-        TEST_WEIGHT = "{}/{}".format(MODEL_DIR, TEST_WEIGHT)
-        ENV_AGENT_FILE = "{}/model.pkl".format(MODEL_DIR)
+        # load model
+        if tf.__version__[0] == "1":
+            path_model = "{}/model.h5".format(MODEL_DIR)
+            if os.path.isfile(path_model):
+                agent.load_model(path_model)
+            else:
+                print("Model does not exist.")
+                sys.exit()
 
-        if not os.path.isfile(ENV_AGENT_FILE):
-            print("Testing model does not exist.")
-            sys.exit()
-        
-        env, agent = load_env_agent(ENV_AGENT_FILE)
+        path_weight = "{}/{}".format(MODEL_DIR, TEST_WEIGHT)
+        agent.load_weight(path_weight)
 
         # test
-        test_DQN(env, agent)
+        test_params = {
+            "state_size": STATE_SIZE, "action_size": ACTION_SIZE,
+            "n_tests": N_TESTS, "max_moves": MAX_MOVES_TEST,
+            "FPS": FPS_TEST
+        }
+
+        test_DQN(env, agent, test_params)
