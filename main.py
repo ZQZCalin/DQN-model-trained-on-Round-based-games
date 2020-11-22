@@ -27,7 +27,7 @@ if __name__ == "__main__":
     snake_model_Dense_Dropout = dense_with_dropout({
         "layer":LAYER, "act": ACTIVATION, "act_out": OUTPUT_ACT,
         "loss": LOSS, "input": STATE_SIZE, "output": ACTION_SIZE, "lr": LEARNING_RATE,
-        "dropout": DROPOUT_RATE
+        "dropout": 0.1
     })
     snake_model_CNN = snake_CNN({
         "input_shape": (WIDTH, HEIGHT, 1), "output": ACTION_SIZE,
@@ -38,6 +38,7 @@ if __name__ == "__main__":
     agent_model = snake_model_Dense_Dropout
     agent = Agent(STATE_SIZE, ACTION_SIZE, model=agent_model, params=agent_params)
 
+    # MODE 0: training
     if MODE == "TRAIN":
         # train params
         train_params = {
@@ -101,7 +102,7 @@ if __name__ == "__main__":
         # train model
         train_DQN(env, agent, train_params)
     
-    # test
+    # MODE 1: testing single model
     if MODE == "TEST":
         # load directory
         if not check_dir(MODEL_DIR, create=False):
@@ -117,7 +118,7 @@ if __name__ == "__main__":
                 print("Model does not exist.")
                 sys.exit()
 
-        path_weight = "{}/{}".format(MODEL_DIR, TEST_WEIGHT)
+        path_weight = "{}/weights/{}".format(MODEL_DIR, TEST_WEIGHT)
         agent.load_weight(path_weight)
 
         # test

@@ -31,6 +31,11 @@ MANUAL_CONTROL = False
 STATE_SIZE = 12
 ACTION_SIZE = 4
 
+# change state type to match the DQN model
+    # - "12bool": vector of 12 booleans for Dense models
+    # - "CNN": (w x h x 1) matrix for CNN models
+STATE_TYPE = "12bool"
+
 #---------------------------------------------------------
 # Agent Parameters
 
@@ -43,10 +48,6 @@ EPSILON_MIN = 0.01
 LEARNING_RATE = 0.00025
 
 # DQN Sequential
-# change state type to match the DQN model
-    # - "12bool": vector of 12 booleans for Dense models
-    # - "CNN": (w x h x 1) matrix for CNN models
-STATE_TYPE = "12bool"
 # Here we provide a Dense Layer models
 LAYER = [128, 128, 128]
 ACTIVATION = "relu"
@@ -77,7 +78,7 @@ Save_Per_Episode = 1
 # Mode 1: Testing Parameters
 N_TESTS = 10
 MAX_MOVES_TEST = 1000
-TEST_WEIGHT = "weights/100.hdf5"
+TEST_WEIGHT = "100.hdf5"
 
 #   set to 0 to disable render
 FPS_TEST = 15
@@ -100,10 +101,10 @@ MODE_LIST = ["TRAIN", "TEST", "CONTINUE"]
 MODE = MODE_LIST[0]
 
 # model directory, e.g., "models/my_model_1"
-MODEL_DIR = "models/snake_10"
+MODEL_DIR = "models/my_model_1"
 
 #---------------------------------------------------------
-# Please add additional NOTES below
+# Please add additional notes below
 """
 Dense (128, 128, 128) with Dropout = 0.3
 State: basic 12 booleans
