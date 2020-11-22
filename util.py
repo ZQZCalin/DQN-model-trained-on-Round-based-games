@@ -1,5 +1,5 @@
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
 from keras.optimizers import Adam
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense
@@ -9,19 +9,35 @@ import sys, os
 import pandas as pd
 from shutil import copyfile
 
-def dense_NN(dict):
+def dense_NN(params):
 
     model = Sequential()
 
     # Layer Input
-    model.add(Dense(dict["layer"][0], input_dim=dict["input"], activation=dict["act"]))
+    model.add(Dense(params["layer"][0], input_dim=params["input"], activation=params["act"]))
     # Layer 1 to n
-    for i in range(1, len(dict["layer"])):
-        model.add(Dense(dict["layer"][i], activation=dict["act"]))
+    for i in range(1, len(params["layer"])):
+        model.add(Dense(params["layer"][i], activation=params["act"]))
     # Layer Output
-    model.add(Dense(dict["output"], activation=dict["act_out"]))
+    model.add(Dense(params["output"], activation=params["act_out"]))
 
-    model.compile(loss=dict["loss"], optimizer=Adam(dict["lr"]))
+    model.compile(loss=params["loss"], optimizer=Adam(params["lr"]))
+
+    return model
+
+def dense_with_dropout(params):
+    model = Sequential()
+    # Layer Input
+    model.add(Dense(params["layer"][0], input_dim=params["input"], activation=params["act"]))
+    model.add(Dropout(params["dropout"]))
+    # Layer 1 to n
+    for i in range(1, len(params["layer"])):
+        model.add(Dense(params["layer"][i], activation=params["act"]))
+        model.add(Dropout(params["dropout"]))
+    # Layer Output
+    model.add(Dense(params["output"], activation=params["act_out"]))
+    # Compile
+    model.compile(loss=params["loss"], optimizer=Adam(params["lr"]))
 
     return model
 

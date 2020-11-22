@@ -24,13 +24,18 @@ if __name__ == "__main__":
         "layer":LAYER, "act": ACTIVATION, "act_out": OUTPUT_ACT,
         "loss": LOSS, "input": STATE_SIZE, "output": ACTION_SIZE, "lr": LEARNING_RATE
     })
+    snake_model_Dense_Dropout = dense_with_dropout({
+        "layer":LAYER, "act": ACTIVATION, "act_out": OUTPUT_ACT,
+        "loss": LOSS, "input": STATE_SIZE, "output": ACTION_SIZE, "lr": LEARNING_RATE,
+        "dropout": DROPOUT_RATE
+    })
     snake_model_CNN = snake_CNN({
         "input_shape": (WIDTH, HEIGHT, 1), "output": ACTION_SIZE,
         "layers": [32, 64, 64], "pool_size": (2, 2),
         "activation": "relu", "act_last": "linear",
-        "loss": "mse", "lr": 0.025
+        "loss": "mse", "lr": 0.00025
     })
-    agent_model = snake_model_CNN
+    agent_model = snake_model_Dense_Dropout
     agent = Agent(STATE_SIZE, ACTION_SIZE, model=agent_model, params=agent_params)
 
     if MODE == "TRAIN":
