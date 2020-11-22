@@ -8,9 +8,6 @@ import pygame
 def train_DQN(env, agent, params={}):
 
     # fetch parameters
-    state_size = params["state_size"]
-    action_size = params["action_size"]
-
     batch_size = load_params(params, "batch_size", 64)
     n_episodes = load_params(params, "n_episodes", 100)
     max_moves = load_params(params, "max_moves", 1000)
@@ -33,7 +30,6 @@ def train_DQN(env, agent, params={}):
 
         # Step 1: Initialization
         state = env.reset()
-        state = np.reshape(state, [1,state_size])
 
         cum_reward = 0
 
@@ -47,7 +43,6 @@ def train_DQN(env, agent, params={}):
             # simulate action and outcomes
             action = agent.act(state)
             next_state, reward, done, score = env.step(action)
-            next_state = np.reshape(next_state, [1,state_size])
 
             # memorize
             agent.remember(state, action, reward, next_state, done)
@@ -83,8 +78,6 @@ def train_DQN(env, agent, params={}):
 def test_DQN(env, agent, params=None):
 
     # fetch parameters
-    state_size = params["state_size"]
-    action_size = params["action_size"]
     n_tests = load_params(params, "n_tests", 10)
     max_moves = load_params(params, "max_games", 500)
     FPS = load_params(params, "FPS", 10)
@@ -96,7 +89,6 @@ def test_DQN(env, agent, params=None):
 
         # Step 1: Initialization
         state = env.reset()
-        state = np.reshape(state, [1,state_size])
 
         # Step 2: Simulate one trial of the game
         for _ in range(max_moves):
@@ -108,8 +100,6 @@ def test_DQN(env, agent, params=None):
             action = agent.exploit(state)
 
             next_state, reward, done, score = env.step(action)
-
-            state = np.reshape(next_state, [1,state_size])
 
             if done:
                 break

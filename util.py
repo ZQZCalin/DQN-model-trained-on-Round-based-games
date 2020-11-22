@@ -1,5 +1,5 @@
 from keras.models import Sequential, load_model
-from keras.layers import Dense
+from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from keras.optimizers import Adam
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense
@@ -24,6 +24,29 @@ def dense_NN(dict):
     model.compile(loss=dict["loss"], optimizer=Adam(dict["lr"]))
 
     return model
+
+def snake_CNN(params):
+
+    model = Sequential()
+    # Conv + MaxPooling
+    layers = params["layers"]
+    model.add(Conv2D(
+        layers[0], (3, 3), activation=params["activation"], 
+        input_shape=params["input_shape"]
+    ))
+    for i in range(1, len(layers)):
+        model.add(MaxPooling2D(params["pool_size"]))
+        model.add(Conv2D(
+            layers[i], (3, 3), activation=params["activation"]
+        ))
+    # Flattern
+    model.add(Flatten())
+    # Dense
+    model.add(Dense(params["output"], activation=params["act_last"]))
+    # Compile
+    model.compile(loss=params["loss"], optimizer=Adam(params["lr"]))
+
+    return model 
 
 def yes_no(text):
     while True:

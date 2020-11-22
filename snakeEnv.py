@@ -122,7 +122,9 @@ class snakeEnv():
     def update_state(self):
         if self.stateType == "12bool":
             return self.update_state_12bool()
-        
+        if self.stateType == "CNN":
+            return self.update_state_CNN()
+
         return
 
     def update_state_12bool(self):
@@ -181,7 +183,30 @@ class snakeEnv():
             # obstacle at west
             new_state[11] = 1
 
-        return new_state
+        return np.reshape(new_state, [1,12])
+
+    def update_state_CNN(self):
+        # return state for CNN model (width x height x 1)
+
+        pix_width = self.to_pix(self.width)
+        pix_height = self.to_pix(self.height)
+        new_state = np.zeros((pix_width, pix_height))
+
+        # draw walls
+        for part in self.extraWalls:
+            new_state[self.to_pix(part.x), self.to_pix(part.y)] = 0.3
+        # draw snake body
+        for part in self.snake.body[1:]:
+            new_state[self.to_pix(part.x), self.to_pix(part.y)] = 0.3
+        # draw snake head
+        try:
+            new_state[self.to_pix(self.snake.head.x), self.to_pix(self.snake.head.y/self.gridSize)] = 0.6
+        except:
+            None
+        # draw apple
+        new_state[self.to_pix(self.apple.rect.x), self.to_pix(self.apple.rect.y)] = 1
+
+        return np.reshape(new_state, [1, pix_width, pix_height, 1])
 
     # =========================================
     # REWARD RULES
@@ -323,6 +348,9 @@ class snakeEnv():
         avoid = [(rect.x, rect.y) for rect in self.snake.body]\
             + [(rect.x, rect.y) for rect in self.extraWalls]
         self.apple.move(avoid)
+
+    def to_pix(self, coordinate):
+        return int(coordinate / self.gridSize)
 
 if __name__ == "__main__":
     params = {

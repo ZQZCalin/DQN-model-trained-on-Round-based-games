@@ -20,16 +20,22 @@ if __name__ == "__main__":
         "gamma": GAMMA, "epsilon": EPSILON, "e_decay": EPSILON_DECAY, 
         "e_min": EPSILON_MIN, "lr": LEARNING_RATE
     }
-    agent_model = dense_NN({
+    snake_model_Dense = dense_NN({
         "layer":LAYER, "act": ACTIVATION, "act_out": OUTPUT_ACT,
-        "loss":LOSS, "input":STATE_SIZE, "output":ACTION_SIZE, "lr":LEARNING_RATE
+        "loss": LOSS, "input": STATE_SIZE, "output": ACTION_SIZE, "lr": LEARNING_RATE
     })
+    snake_model_CNN = snake_CNN({
+        "input_shape": (WIDTH, HEIGHT, 1), "output": ACTION_SIZE,
+        "layers": [32, 64, 64], "pool_size": (2, 2),
+        "activation": "relu", "act_last": "linear",
+        "loss": "mse", "lr": 0.025
+    })
+    agent_model = snake_model_CNN
     agent = Agent(STATE_SIZE, ACTION_SIZE, model=agent_model, params=agent_params)
 
     if MODE == "TRAIN":
         # train params
         train_params = {
-            "state_size": STATE_SIZE, "action_size": ACTION_SIZE,
             "batch_size": BATCH_SIZE, "n_episodes": N_TRAINS,
             "max_moves": MAX_MOVES_TRAIN, "FPS": FPS_TRAIN,
             "exp_replay": EXPERIENCE_REPLAY,
@@ -111,7 +117,6 @@ if __name__ == "__main__":
 
         # test
         test_params = {
-            "state_size": STATE_SIZE, "action_size": ACTION_SIZE,
             "n_tests": N_TESTS, "max_moves": MAX_MOVES_TEST,
             "FPS": FPS_TEST
         }
