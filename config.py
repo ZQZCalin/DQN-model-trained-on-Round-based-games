@@ -74,34 +74,43 @@ Render_Per_Episode = 1
 #   save (weight, model, performance) every WPE episodes
 Save_Per_Episode = 1
 
+
 #---------------------------------------------------------
 # Mode 1: Testing Parameters
-N_TESTS = 10
+
+N_TESTS = 3
 MAX_MOVES_TEST = 1000
 TEST_WEIGHT = "100.hdf5"
 
 #   set to 0 to disable render
-FPS_TEST = 15
+FPS_TEST = 0
+
 
 #---------------------------------------------------------
 # Mode 2: Continue Training (Currently UNAVAILABLE)
-"""
-By using this option, you cannot change any training parameter.
-You must use the same parameter as before!
-You must also keep your latest weight, model, and performance directory.
-"""
+
 N_LAST = 50     # latest episode
 N_THIS = 100    # episode you want to train this time
+
+
+#---------------------------------------------------------
+# Mode 3: Test Entire Model
+# we assume that the weights are named by "e.hdf5", e integer
+
+N_TEST_REPEAT = 10   # number of repeats in each epoch
+MAX_MOVES_TEST_ALL = 1000
+
+TEST_ALL_DIR = "test_all_result"
 
 #---------------------------------------------------------
 # CHOOSE MODE AND DIRECTORY BEFORE STARTING
 
 # train / test mode
-MODE_LIST = ["TRAIN", "TEST", "CONTINUE"]
-MODE = MODE_LIST[0]
+MODE_LIST = ["TRAIN", "TEST", "CONTINUE", "TEST_ALL"]
+MODE = MODE_LIST[3]
 
 # model directory, e.g., "models/my_model_1"
-MODEL_DIR = "models/my_model_1"
+MODEL_DIR = "models/snake_7"
 
 #---------------------------------------------------------
 # Please add additional notes below

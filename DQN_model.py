@@ -11,7 +11,7 @@ def train_DQN(env, agent, params={}):
     batch_size = load_params(params, "batch_size", 64)
     n_episodes = load_params(params, "n_episodes", 100)
     max_moves = load_params(params, "max_moves", 1000)
-    FPS = load_params(params, "FPS", 10)
+    FPS = load_params(params, "FPS", 15)
     experience_replay = load_params(params, "exp_replay", True)
 
     model_dir = load_params(params, "model_dir", "my_model")
@@ -79,30 +79,43 @@ def test_DQN(env, agent, params=None):
 
     # fetch parameters
     n_tests = load_params(params, "n_tests", 10)
-    max_moves = load_params(params, "max_games", 500)
+    max_moves = load_params(params, "max_games", 1000)
     FPS = load_params(params, "FPS", 10)
+    verbose = load_params(params, "verbose", True)
 
     # start testing
     done = 0
+
+    # Save data for performance analysis
+    # each row is one instance: [reward, score, move]
+    performance = np.zeros((n_tests, 3))
 
     for e in range(n_tests):
 
         # Step 1: Initialization
         state = env.reset()
+        cum_reward = 0
 
         # Step 2: Simulate one trial of the game
-        for _ in range(max_moves):
-
+        for move in range(max_moves):
+            # render
             if FPS != 0:
                 env.render(FPS=FPS)
-
-            # use exploit() instead of act()
+            # action
             action = agent.exploit(state)
-
+            # step forward
             next_state, reward, done, score = env.step(action)
-
+            # conclude round
+            state = next_state
+            cum_reward += reward    # (this will always -100pt upon dead)
             if done:
                 break
 
+        # Step 3: Update performance
+        performance[e,:] = [cum_reward, score, move]
+
         # print the training result
-        print("progress: {}/{}, score: {}".format(e, n_tests, score))
+        if verbose:
+            print("progress: {}/{}, score: {}".format(e+1, n_tests, score))
+
+    return performance

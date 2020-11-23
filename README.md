@@ -38,7 +38,7 @@ This section documents each parameter in [config.py](https://github.com/ZQZCalin
     - BATCH_SIZE: batch_size, default = 64; for Snake game, 512 is recommended
     - N_TRAINS: number of training epoches (games), default = 100
     - MAX_MOVES_TRAIN: maximum number of moves in each epoch, default = 1000
-    - FPS_TRAIN: FPS of game rendering, default = 10; set to 0 to disable rendering
+    - FPS_TRAIN: FPS of game rendering, default = 15; set to 0 to disable rendering
     - EXPERIENCE_REPLAY: default = True; if turned on, the agent will train every move instead of every game
     - Save_Per_Episode: save weights and performance every SPE epoches, default = 1
 4. Testing Parameters (Single Model):

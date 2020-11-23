@@ -128,3 +128,52 @@ if __name__ == "__main__":
         }
 
         test_DQN(env, agent, test_params)
+
+    # MODE 3: Testing entire model
+    if MODE == "TEST_ALL":
+        # load directory
+        if not check_dir(MODEL_DIR, create=False):
+            print("Your model directory does not exist.")
+            sys.exit()
+        
+        # load model
+        if tf.__version__[0] == "1":
+            path_model = "{}/model.h5".format(MODEL_DIR)
+            if os.path.isfile(path_model):
+                agent.load_model(path_model)
+            else:
+                print("Model does not exist.")
+                sys.exit()
+
+        # check saved model
+        perform_dir = "{}/{}".format(MODEL_DIR, TEST_ALL_DIR)
+        if os.path.isdir(perform_dir):
+            text = "Are you sure to overwrite your performance result"
+            if not yes_no(text):
+                sys.exit()
+        else:
+            os.mkdir(perform_dir)
+
+        # parameters
+        test_params = {
+            "n_tests": N_TEST_REPEAT, "max_moves": MAX_MOVES_TEST_ALL, 
+            "FPS": 0, "verbose": False
+        }
+
+        # load weight indices
+        ep_index = [int(file.split(".")[0]) for file in os.listdir("{}/weights".format(MODEL_DIR))]
+        ep_index.sort()
+        np.savetxt("{}/ep_index.txt".format(perform_dir), ep_index)
+
+        # run all weights
+        performance = np.reshape([], [0,3])
+        for e in ep_index:
+            # load weight
+            path_weight = "{}/weights/{}.hdf5".format(MODEL_DIR, e)
+            agent.load_weight(path_weight)
+            # test on episode e
+            performance = np.concatenate((performance, test_DQN(env, agent, test_params)), axis=0)
+            # print progress
+            print("progress: {}/{}".format(e, len(ep_index)))
+        
+        np.savetxt("{}/performance.txt".format(perform_dir), performance)
