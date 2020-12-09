@@ -1,13 +1,26 @@
+from util import *
+#---------------------------------------------------------
+# Please add additional notes below
 """
-In this document, you need to fill in the parameters of your model.
-- If you choose to train: 
-    - this config will be saved to "config.txt"
-    - env and agent will be saved to "model.pkl"
+Dense (128, 128, 128) without Dropout
+State: basic 12 booleans
+Reward: basic
+Loss: MSE
+Experience replay: On
+Extra Walls: Type 3 (three long wall-blocks)
+"""
 
-- If you choose to test, 
-    - the program will test on the test_weight, and 
-      the previously saved (env, agent)
-"""
+
+#---------------------------------------------------------
+# CHOOSE MODE AND DIRECTORY BEFORE STARTING
+
+# train / test mode
+MODE_LIST = ["TRAIN", "TEST", "CONTINUE", "TEST_ALL"]
+MODE = MODE_LIST[0]
+
+# model directory, e.g., "models/my_model_1"
+MODEL_DIR = "models/snake_4"
+
 
 #---------------------------------------------------------
 # Environment Parameters (For SNAKE Env)
@@ -17,8 +30,15 @@ HEIGHT = 20
 
 COLLIDE_WALL = True
 COLLIDE_BODY = True
-EXTRA_WALLS  = [(x,10) for x in range(6,15)] + [(x,11) for x in range(6,15)] + [(x,11) for x in range(6,15)]
-# EXTRA_WALLS = []
+
+WALL_TYPES = {
+    "0": [],
+    "1": rectangle((6,10),(14,11)),
+    "2": rectangle((4,4), (7,7)) + rectangle((12,4), (15,7)) + rectangle((4,12), (7,15)) + rectangle((12,12), (15,15)),
+    "3": rectangle((4,5), (4,14)) + rectangle((9,5), (10,14)) + rectangle((15,5), (15,14)),
+    "-1": "RANDOM"
+}
+EXTRA_WALLS = WALL_TYPES["3"]
 
 REWARD_TYPE = "basic"
 REWARD_VALUES = {
@@ -97,28 +117,7 @@ N_THIS = 100    # episode you want to train this time
 # Mode 3: Test Entire Model
 # we assume that the weights are named by "e.hdf5", e integer
 
-N_TEST_REPEAT = 10   # number of repeats in each epoch
+N_TEST_REPEAT = 100   # number of repeats in each epoch
 MAX_MOVES_TEST_ALL = 1000
 
-TEST_ALL_DIR = "test_all_result"
-
-#---------------------------------------------------------
-# CHOOSE MODE AND DIRECTORY BEFORE STARTING
-
-# train / test mode
-MODE_LIST = ["TRAIN", "TEST", "CONTINUE", "TEST_ALL"]
-MODE = MODE_LIST[3]
-
-# model directory, e.g., "models/my_model_1"
-MODEL_DIR = "models/snake_7"
-
-#---------------------------------------------------------
-# Please add additional notes below
-"""
-Dense (128, 128, 128) with Dropout = 0.3
-State: basic 12 booleans
-Reward: basic
-Model: Dense
-Loss: MSE
-Experience replay: On
-"""
+TEST_ALL_DIR = "test_result_2"

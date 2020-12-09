@@ -157,3 +157,16 @@ def load_params(params, key, default):
         return params[str(key)]
     except:
         return default 
+
+def rectangle(va, vb):
+    # return a 2D list of rectangles with diagonal vertices va and vb (inclusive)
+    xa = min(va[0], vb[0])
+    xb = max(va[0], vb[0])
+    ya = min(va[1], vb[1])
+    yb = max(va[1], vb[1])
+
+    L = []
+    for y in range(ya, yb+1):
+        L += [(x,y) for x in range(xa,xb+1)]
+
+    return L

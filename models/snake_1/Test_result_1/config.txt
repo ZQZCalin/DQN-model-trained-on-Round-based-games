@@ -1,0 +1,3 @@
+N_TEST_REPEAT = 10
+MAX_MOVES = 1000
+EXTRA_WALLS = Rectangle (6,10) - (14, 11)

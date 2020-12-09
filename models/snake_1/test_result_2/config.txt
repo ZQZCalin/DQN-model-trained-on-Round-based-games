@@ -1,0 +1,2 @@
+N_REPEAT = 100
+no extra walls

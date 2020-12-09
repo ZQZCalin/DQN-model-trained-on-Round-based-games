@@ -26,7 +26,8 @@ def train_DQN(env, agent, params={}):
         "e": [], "reward": [], "score": [], "move": []
     })
 
-    for e in range(1, n_episodes+1):
+    e = 1
+    while e <= n_episodes:
 
         # Step 1: Initialization
         state = env.reset()
@@ -74,6 +75,10 @@ def train_DQN(env, agent, params={}):
         if e % save_per_episode == 0:
             performance.to_csv("{}/performance/{:.0f}.csv".format(model_dir, e), index=False)
 
+        # episode starts when the agent actually trains
+        if agent.epsilon != 1:
+            e += 1
+
 
 def test_DQN(env, agent, params=None):
 
@@ -99,6 +104,7 @@ def test_DQN(env, agent, params=None):
         # Step 2: Simulate one trial of the game
         for move in range(max_moves):
             # render
+            pygame.event.pump()
             if FPS != 0:
                 env.render(FPS=FPS)
             # action

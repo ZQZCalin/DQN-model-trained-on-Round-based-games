@@ -1,17 +1,123 @@
-name = SNAKE
-gamma = 0.95
-epsilon = 1.0
-epsilon_decay = 0.995
-epsilon_min = 0.01
-learning_rate = 0.00025
-batch_size = 512
-experience_replay = True
-number_of_trains = 50
-max_moves = 10000
---------------------------------------------------
-Additional notes:
-Naive reward
-Dense [128,128,128] with relu
-Output with softmax
-Loss: mse
+from util import *
+#---------------------------------------------------------
+# Please add additional notes below
+"""
+Dense (128, 128, 128) without Dropout
+State: basic 12 booleans
+Reward: basic
+Loss: MSE
 Experience replay: On
+Extra Walls: Type 2 (four square blocks)
+"""
+
+
+#---------------------------------------------------------
+# CHOOSE MODE AND DIRECTORY BEFORE STARTING
+
+# train / test mode
+MODE_LIST = ["TRAIN", "TEST", "CONTINUE", "TEST_ALL"]
+MODE = MODE_LIST[0]
+
+# model directory, e.g., "models/my_model_1"
+MODEL_DIR = "models/snake_3"
+
+
+#---------------------------------------------------------
+# Environment Parameters (For SNAKE Env)
+GRIDSIZE = 20
+WIDTH  = 20
+HEIGHT = 20
+
+COLLIDE_WALL = True
+COLLIDE_BODY = True
+
+WALL_TYPES = {
+    "0": [],
+    "1": rectangle((6,10),(14,11)),
+    "2": rectangle((4,4), (7,7)) + rectangle((12,4), (15,7)) + rectangle((4,12), (7,15)) + rectangle((12,12), (15,15)),
+    "3": rectangle((4,5), (5,14)) + rectangle((9,5), (10,14)) + rectangle((14,5), (15,14)),
+    "-1": "RANDOM"
+}
+EXTRA_WALLS = WALL_TYPES["2"]
+
+REWARD_TYPE = "basic"
+REWARD_VALUES = {
+    "eat": 10, "die": -100, "closer": 1, "away": -1
+}
+
+SNAKE_LENGTH = 1
+MANUAL_CONTROL = False
+
+STATE_SIZE = 12
+ACTION_SIZE = 4
+
+# change state type to match the DQN model
+    # - "12bool": vector of 12 booleans for Dense models
+    # - "CNN": (w x h x 1) matrix for CNN models
+STATE_TYPE = "12bool"
+
+#---------------------------------------------------------
+# Agent Parameters
+
+GAMMA = 0.95
+
+EPSILON = 1.0
+EPSILON_DECAY = 0.995
+EPSILON_MIN = 0.01
+
+LEARNING_RATE = 0.00025
+
+# DQN Sequential
+# Here we provide a Dense Layer models
+LAYER = [128, 128, 128]
+ACTIVATION = "relu"
+OUTPUT_ACT = "linear"
+LOSS = "mse"
+DROPOUT_RATE = 0.1
+# If you choose to define your own model,
+# please go to main.py
+
+
+#---------------------------------------------------------
+# Mode 0: Train Parameters
+
+BATCH_SIZE = 512
+
+N_TRAINS = 125
+MAX_MOVES_TRAIN = 1000
+#   set FPS to 0 to disable render
+FPS_TRAIN = 15
+#   turn on experience_replay to train every move instead of every game
+EXPERIENCE_REPLAY = True
+#   render per RPE episodes
+Render_Per_Episode = 1
+#   save (weight, model, performance) every WPE episodes
+Save_Per_Episode = 1
+
+
+#---------------------------------------------------------
+# Mode 1: Testing Parameters
+
+N_TESTS = 3
+MAX_MOVES_TEST = 1000
+TEST_WEIGHT = "100.hdf5"
+
+#   set to 0 to disable render
+FPS_TEST = 0
+
+
+#---------------------------------------------------------
+# Mode 2: Continue Training (Currently UNAVAILABLE)
+
+N_LAST = 50     # latest episode
+N_THIS = 100    # episode you want to train this time
+
+
+#---------------------------------------------------------
+# Mode 3: Test Entire Model
+# we assume that the weights are named by "e.hdf5", e integer
+
+N_TEST_REPEAT = 100   # number of repeats in each epoch
+MAX_MOVES_TEST_ALL = 1000
+
+TEST_ALL_DIR = "test_result_2"

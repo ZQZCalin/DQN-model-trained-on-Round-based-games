@@ -35,7 +35,7 @@ if __name__ == "__main__":
         "activation": "relu", "act_last": "linear",
         "loss": "mse", "lr": 0.00025
     })
-    agent_model = snake_model_Dense_Dropout
+    agent_model = snake_model_Dense
     agent = Agent(STATE_SIZE, ACTION_SIZE, model=agent_model, params=agent_params)
 
     # MODE 0: training
